@@ -1,11 +1,12 @@
 # Codex Ultron
 
-Portable Ultron, Jarvis, and Luna setup for Codex CLI and the Codex surface in the ChatGPT desktop app.
+Portable Ultron, Jarvis, Edith, and Luna setup for Codex CLI and the Codex surface in the ChatGPT desktop app.
 
 ## Model Routing
 
 - Ultron: `gpt-5.6-sol`, high reasoning
 - Jarvis: `gpt-5.6-terra`, high reasoning
+- Edith: `gpt-5.6-luna`, high reasoning
 - Every Luna role: `gpt-5.6-luna`, max reasoning
 
 The CLI and desktop launchers select the requested lead profile and model automatically. Custom Luna agent files select their own model automatically when spawned. Generic Codex chats do not permit a skill to replace the model of an already-running thread, so use the matching launcher when deterministic lead routing matters.
@@ -29,7 +30,7 @@ sh scripts/install.sh
 The user installer writes:
 
 - agents to `$CODEX_HOME/agents` or `~/.codex/agents`;
-- `ultron.config.toml` and `jarvis.config.toml` beside `~/.codex/config.toml`;
+- `ultron.config.toml`, `jarvis.config.toml`, and `edith.config.toml` beside `~/.codex/config.toml`;
 - the shared skill to `~/.agents/skills/codex-ultron`.
 
 These locations are shared by Codex CLI and the desktop app. Existing files are protected. Use `-Force` or `--force` only when intentionally replacing a previous installation. Restart Codex after installation if the skill or agents do not appear immediately.
@@ -53,6 +54,7 @@ Windows:
 ```powershell
 .\scripts\start-ultron.ps1
 .\scripts\start-jarvis.ps1
+.\scripts\start-edith.ps1
 .\scripts\start-ultron.ps1 -Prompt "Design and implement the requested system"
 ```
 
@@ -62,6 +64,7 @@ Linux or macOS:
 chmod +x scripts/*.sh
 ./scripts/start-ultron.sh
 ./scripts/start-jarvis.sh
+./scripts/start-edith.sh
 ./scripts/start-ultron.sh "Design and implement the requested system"
 ```
 
@@ -83,6 +86,7 @@ Windows:
 ```powershell
 .\scripts\start-ultron-app.ps1 -WorkingDirectory C:\path\to\repo
 .\scripts\start-jarvis-app.ps1 -WorkingDirectory C:\path\to\repo
+.\scripts\start-edith-app.ps1 -WorkingDirectory C:\path\to\repo
 ```
 
 Linux or macOS:
@@ -90,15 +94,16 @@ Linux or macOS:
 ```sh
 ./scripts/start-ultron-app.sh /path/to/repo
 ./scripts/start-jarvis-app.sh /path/to/repo
+./scripts/start-edith-app.sh /path/to/repo
 ```
 
 The launcher passes the model, reasoning settings, and matching lead instructions while opening the desktop workspace. Codex currently accepts `--profile` for runtime CLI commands but not `codex app`, so desktop launchers inject the equivalent profile settings explicitly. In the desktop skill picker, `Codex Ultron` provides the same orchestration workflow. Agent activity appears as inspectable subagent threads.
 
 ## Package Layout
 
-- `agents/`: five custom Codex agent TOMLs
-- `profiles/`: Ultron and Jarvis primary-session profiles
-- `instructions/`: lead instructions injected by desktop launchers
+- `agents/`: six custom Codex agent TOMLs
+- `profiles/`: Edith, Ultron, and Jarvis primary-session profiles
+- `instructions/`: Edith, Ultron, and Jarvis lead instructions injected by desktop launchers
 - `skills/codex-ultron/`: shared CLI and desktop skill with app metadata
 - `config/codex-config.example.toml`: safe project-level multi-agent defaults
 - `scripts/install.*`: atomic user/project installers

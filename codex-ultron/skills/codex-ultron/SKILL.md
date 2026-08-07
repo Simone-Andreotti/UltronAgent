@@ -9,8 +9,9 @@ description: Run the Ultron or Jarvis orchestration workflow with bounded Luna s
 
 1. Use Ultron for complex, ambiguous, architectural, high-risk, security-sensitive, or cross-system work.
 2. Use Jarvis for medium-complexity implementation, debugging, refactoring, and integration.
-3. Honor an explicitly named lead.
-4. Keep the selected lead responsible for integration and final acceptance.
+3. Use Edith for simple, well-scoped implementation, debugging, and maintenance work.
+4. Honor an explicitly named lead.
+5. Keep the selected lead responsible for integration and final acceptance.
 
 ## Execute Efficiently
 
@@ -26,4 +27,4 @@ Each Luna packet contains only objective, scope, starting paths, preserved inter
 
 ## Model Policy
 
-Ultron uses `gpt-5.6-sol`; Jarvis uses `gpt-5.6-terra`; every Luna role uses `gpt-5.6-luna` with max reasoning. Profiles and launchers select lead models. Agent TOMLs select Luna models.
+Ultron uses `gpt-5.6-sol`; Jarvis uses `gpt-5.6-terra`; Edith and every Luna role use `gpt-5.6-luna`. Lead profiles and launchers use high reasoning; Luna roles use max reasoning. Profiles and launchers select lead models. Agent TOMLs select Luna models.

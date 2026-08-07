@@ -6,6 +6,7 @@ $packageRoot = Split-Path -Parent $PSScriptRoot
 $agentRoot = Join-Path $packageRoot "agents"
 $profileRoot = Join-Path $packageRoot "profiles"
 $expectedAgents = @{
+    "edith.toml" = "gpt-5.6-luna"
     "ultron.toml" = "gpt-5.6-sol"
     "jarvis.toml" = "gpt-5.6-terra"
     "luna_code_analyst.toml" = "gpt-5.6-luna"
@@ -13,6 +14,7 @@ $expectedAgents = @{
     "luna_worker.toml" = "gpt-5.6-luna"
 }
 $expectedProfiles = @{
+    "edith.config.toml" = "gpt-5.6-luna"
     "ultron.config.toml" = "gpt-5.6-sol"
     "jarvis.config.toml" = "gpt-5.6-terra"
 }
@@ -28,7 +30,7 @@ function Assert-True {
     if (-not $Condition) { throw $Message }
 }
 
-Assert-True ((Get-ChildItem $agentRoot -Filter "*.toml").Count -eq 5) "Package must contain five custom agents."
+Assert-True ((Get-ChildItem $agentRoot -Filter "*.toml").Count -eq 6) "Package must contain six custom agents."
 foreach ($agentFile in $expectedAgents.Keys) {
     $content = (Get-Content (Join-Path $agentRoot $agentFile) -Raw) -replace "`r`n", "`n"
     Assert-True ($content -match '(?m)^name = "[^"]+"$') "$agentFile is missing a name."
@@ -65,12 +67,16 @@ Assert-True ($skill -match "gpt-5\.6-sol.*gpt-5\.6-terra.*gpt-5\.6-luna") "Skill
 Assert-True ($metadata -match 'display_name: "Codex Ultron"') "Desktop skill metadata is missing."
 
 $launchers = @{
+    "start-edith.ps1" = @("edith", "gpt-5.6-luna")
     "start-ultron.ps1" = @("ultron", "gpt-5.6-sol")
     "start-jarvis.ps1" = @("jarvis", "gpt-5.6-terra")
+    "start-edith.sh" = @("edith", "gpt-5.6-luna")
     "start-ultron.sh" = @("ultron", "gpt-5.6-sol")
     "start-jarvis.sh" = @("jarvis", "gpt-5.6-terra")
+    "start-edith-app.ps1" = @("edith", "gpt-5.6-luna")
     "start-ultron-app.ps1" = @("ultron", "gpt-5.6-sol")
     "start-jarvis-app.ps1" = @("jarvis", "gpt-5.6-terra")
+    "start-edith-app.sh" = @("edith", "gpt-5.6-luna")
     "start-ultron-app.sh" = @("ultron", "gpt-5.6-sol")
     "start-jarvis-app.sh" = @("jarvis", "gpt-5.6-terra")
 }
@@ -80,7 +86,7 @@ foreach ($launcher in $launchers.Keys) {
     Assert-True ($content -match [regex]::Escape($launchers[$launcher][1])) "$launcher does not select its model."
     Assert-True ($content -match 'model_reasoning_effort') "$launcher does not select reasoning effort."
 }
-foreach ($launcher in @("start-ultron.sh", "start-jarvis.sh")) {
+foreach ($launcher in @("start-edith.sh", "start-ultron.sh", "start-jarvis.sh")) {
     $content = Get-Content (Join-Path $PSScriptRoot $launcher) -Raw
     Assert-True ($content -match '--model.*--profile.*--config') "$launcher must reject routing overrides."
 }
@@ -110,7 +116,7 @@ try {
     $env:CODEX_HOME = Join-Path $tempHome ".codex"
     & (Join-Path $PSScriptRoot "install.ps1") -HomePath $tempHome
     $userFiles = @(Get-ChildItem $tempHome -File -Force -Recurse)
-    Assert-True ($userFiles.Count -eq 9) "User install must create nine files; found $($userFiles.Count)."
+    Assert-True ($userFiles.Count -eq 11) "User install must create eleven files; found $($userFiles.Count)."
 
     $conflictRejected = $false
     try { & (Join-Path $PSScriptRoot "install.ps1") -HomePath $tempHome } catch { $conflictRejected = $_.Exception.Message -match "Refusing partial install" }
@@ -118,13 +124,15 @@ try {
 
     & (Join-Path $PSScriptRoot "install.ps1") -Scope Project -ProjectPath $tempProject
     $projectFiles = @(Get-ChildItem $tempProject -File -Force -Recurse)
-    Assert-True ($projectFiles.Count -eq 8) "Project install must create eight files; found $($projectFiles.Count)."
+    Assert-True ($projectFiles.Count -eq 9) "Project install must create nine files; found $($projectFiles.Count)."
 
     Assert-True ($null -ne (Get-Command codex -ErrorAction SilentlyContinue)) "Codex CLI is required for profile validation."
     & codex --profile ultron mcp list | Out-Null
     Assert-True ($LASTEXITCODE -eq 0) "Codex failed to load the Ultron profile."
     & codex --profile jarvis mcp list | Out-Null
     Assert-True ($LASTEXITCODE -eq 0) "Codex failed to load the Jarvis profile."
+    & codex --profile edith mcp list | Out-Null
+    Assert-True ($LASTEXITCODE -eq 0) "Codex failed to load the Edith profile."
     $desktopInstructions = Get-Content (Join-Path $packageRoot "instructions\ultron.md") -Raw | ConvertTo-Json -Compress
     & codex --config 'model="gpt-5.6-sol"' --config 'model_reasoning_effort="high"' --config "developer_instructions=$desktopInstructions" mcp list | Out-Null
     Assert-True ($LASTEXITCODE -eq 0) "Codex failed to load desktop-style Ultron configuration."
