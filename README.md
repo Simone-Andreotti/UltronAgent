@@ -9,21 +9,53 @@ UltronAgent is a portable multi-agent workflow for Codex and GitHub Copilot. It 
 
 Each package includes its own installation and validation instructions in its README.
 
-## Quick Start
+## Installation
 
-Choose the package for the tool you use, then run its installer from that package directory.
+Choose `codex-ultron`, `copilot-ultron`, or both. Run the commands from the repository root.
+
+Global installation applies the package to your user profile. Project installation applies it only to the project path you provide. Existing files are protected unless a force option is explicitly supplied.
+
+### Windows
+
+Use PowerShell for either package.
+
+Global installation:
 
 ```powershell
-cd codex-ultron
-.\scripts\install.ps1
+.\codex-ultron\scripts\install.ps1
+.\copilot-ultron\scripts\install.ps1
 ```
+
+Project installation:
 
 ```powershell
-cd copilot-ultron
-.\scripts\install.ps1
+.\codex-ultron\scripts\install.ps1 -Scope Project -ProjectPath C:\path\to\project
+.\copilot-ultron\scripts\install.ps1 -Scope Project -ProjectPath C:\path\to\project
 ```
 
-The installers protect existing user files unless a force option is explicitly supplied. Review the package README before installing into a shared or project-specific configuration.
+Add `-Force` to replace files that are already installed.
+
+### Linux and macOS
+
+Use the POSIX shell installers.
+
+Global installation:
+
+```sh
+sh ./codex-ultron/scripts/install.sh
+sh ./copilot-ultron/scripts/install.sh
+```
+
+Project installation:
+
+```sh
+sh ./codex-ultron/scripts/install.sh --scope project --project-path /path/to/project
+sh ./copilot-ultron/scripts/install.sh --scope project --project-path /path/to/project
+```
+
+Add `--force` to replace files that are already installed. The scripts detect Linux and macOS user configuration paths automatically.
+
+The Codex installer places global files under `~/.codex` and `~/.agents`, or project files under `.codex` and `.agents`. The Copilot installer places global files under `~/.copilot` and the VS Code user profile, or project files under `.github/agents`, `.github/prompts`, and `.github/skills`.
 
 ## Validation
 
