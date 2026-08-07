@@ -1,0 +1,7 @@
+interface:
+  display_name: "Codex Ultron"
+  short_description: "Ultron and Jarvis orchestration with Luna workers"
+  default_prompt: "Use the appropriate Ultron or Jarvis lead and bounded Luna subagents only when they materially improve execution."
+
+policy:
+  allow_implicit_invocation: true

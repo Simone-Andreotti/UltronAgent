@@ -1,0 +1,15 @@
+# Local workspace material
+/.github/
+/agent-practice-review/
+/tasks/
+
+# Operating-system and editor noise
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local secrets and logs
+.env
+.env.*
+!.env.example
+*.log
