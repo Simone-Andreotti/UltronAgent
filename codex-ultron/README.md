@@ -13,6 +13,10 @@ The CLI and desktop launchers select the requested lead profile and model automa
 
 Small and well-scoped work stays in the lead. Luna is used only for bounded analysis, research, or implementation when isolation or independent parallelism materially reduces lead cost or context. Leads own architecture, shared files, integration, validation, and user communication.
 
+For requests that explicitly ask for internet or web research, external references, current documentation, library comparisons, or proven patterns, Ultron must make a fresh `luna_researcher` child its first external-evidence action. The lead waits for that bounded evidence packet before planning and only researches directly afterward to fill a specific gap. In the Codex CLI, pass `--search` or use the launcher's `-Search` switch to expose live web search to the lead and its researcher.
+
+Codex supports one delegation layer for this package: a primary lead can spawn Luna, but a lead launched as a subagent does not receive the native `spawn_agent` tool and cannot spawn sub-subagents. Plan any Luna fan-out in the primary lead thread. Custom Luna selection uses a fresh native child with `fork_turns = "none"` and the exact underscore `agent_type`; never combine a custom `agent_type` with a full-history fork because that fork inherits the parent role.
+
 ## Install
 
 Windows user installation:
@@ -49,9 +53,13 @@ Project scope writes `.codex/agents`, `.codex/config.toml`, and `.agents/skills/
 
 ## Codex CLI
 
+The supported primary-agent choices are profiles. Use the unified launcher for an interactive Edith/Jarvis/Ultron menu:
+
 Windows:
 
 ```powershell
+.\scripts\start-codex.ps1
+.\scripts\start-codex.ps1 -Agent jarvis -WorkingDirectory C:\path\to\repo
 .\scripts\start-ultron.ps1
 .\scripts\start-jarvis.ps1
 .\scripts\start-edith.ps1
@@ -62,6 +70,8 @@ Linux or macOS:
 
 ```sh
 chmod +x scripts/*.sh
+./scripts/start-codex.sh
+./scripts/start-codex.sh --agent jarvis
 ./scripts/start-ultron.sh
 ./scripts/start-jarvis.sh
 ./scripts/start-edith.sh
@@ -79,11 +89,13 @@ In any Codex CLI session, mention `$codex-ultron` to invoke the shared workflow 
 
 ## Desktop App
 
-Install user scope, then launch the required lead into a workspace.
+Install user scope, then use the unified launcher to choose a lead and open a workspace. Codex does not currently expose a native primary custom-agent picker for `codex app`; the launcher is the supported choice layer.
 
 Windows:
 
 ```powershell
+.\scripts\start-codex-app.ps1
+.\scripts\start-codex-app.ps1 -Agent jarvis -WorkingDirectory C:\path\to\repo
 .\scripts\start-ultron-app.ps1 -WorkingDirectory C:\path\to\repo
 .\scripts\start-jarvis-app.ps1 -WorkingDirectory C:\path\to\repo
 .\scripts\start-edith-app.ps1 -WorkingDirectory C:\path\to\repo
@@ -92,12 +104,14 @@ Windows:
 Linux or macOS:
 
 ```sh
+./scripts/start-codex-app.sh
+./scripts/start-codex-app.sh --agent jarvis /path/to/repo
 ./scripts/start-ultron-app.sh /path/to/repo
 ./scripts/start-jarvis-app.sh /path/to/repo
 ./scripts/start-edith-app.sh /path/to/repo
 ```
 
-The launcher passes the model, reasoning settings, and matching lead instructions while opening the desktop workspace. Codex currently accepts `--profile` for runtime CLI commands but not `codex app`, so desktop launchers inject the equivalent profile settings explicitly. In the desktop skill picker, `Codex Ultron` provides the same orchestration workflow. Agent activity appears as inspectable subagent threads.
+The launcher passes the selected model, reasoning settings, and matching lead instructions while opening the desktop workspace. Codex currently accepts `--profile` for runtime CLI commands but not `codex app`, so desktop launchers inject the equivalent lead settings explicitly. In the desktop skill picker, `Codex Ultron` provides the same orchestration workflow. Agent activity appears as inspectable subagent threads.
 
 ## Package Layout
 
@@ -107,7 +121,7 @@ The launcher passes the model, reasoning settings, and matching lead instruction
 - `skills/codex-ultron/`: shared CLI and desktop skill with app metadata
 - `config/codex-config.example.toml`: safe project-level multi-agent defaults
 - `scripts/install.*`: atomic user/project installers
-- `scripts/start-*`: locked CLI and desktop launchers
+- `scripts/start-*`: locked individual launchers plus unified Edith/Jarvis/Ultron CLI and desktop choosers
 - `scripts/test-package.ps1`: package and disposable-install checks
 
 The package deliberately excludes credentials, trust records, MCP servers, plugins, notifications, machine paths, sandbox preferences, and approval policy. Those remain owned by the user's existing Codex configuration.

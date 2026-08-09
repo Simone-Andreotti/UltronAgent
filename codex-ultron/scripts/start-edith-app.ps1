@@ -14,5 +14,5 @@ if (-not (Test-Path (Join-Path $codexHome "agents\luna_worker.toml"))) {
 $packageRoot = Split-Path -Parent $PSScriptRoot
 $instructions = Get-Content (Join-Path $packageRoot "instructions\edith.md") -Raw
 $encodedInstructions = $instructions | ConvertTo-Json -Compress
-& codex app --config 'model="gpt-5.6-luna"' --config 'model_reasoning_effort="high"' --config 'model_verbosity="low"' --config "developer_instructions=$encodedInstructions" $WorkingDirectory
+& codex app --config 'model="gpt-5.6-luna"' --config 'model_reasoning_effort="high"' --config "developer_instructions=$encodedInstructions" $WorkingDirectory
 exit $LASTEXITCODE

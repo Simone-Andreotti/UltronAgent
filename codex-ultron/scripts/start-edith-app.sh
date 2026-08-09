@@ -9,4 +9,4 @@ script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 package_root=$(CDPATH= cd -- "$script_dir/.." && pwd)
 developer_instructions=$(printf 'developer_instructions="""\n%s\n"""' "$(cat "$package_root/instructions/edith.md")")
 
-exec codex app --config 'model="gpt-5.6-luna"' --config 'model_reasoning_effort="high"' --config 'model_verbosity="low"' --config "$developer_instructions" "${1:-$PWD}"
+exec codex app --config 'model="gpt-5.6-luna"' --config 'model_reasoning_effort="high"' --config "$developer_instructions" "${1:-$PWD}"
