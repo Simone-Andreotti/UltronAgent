@@ -23,7 +23,7 @@ description: Run the Ultron or Jarvis orchestration workflow with bounded Luna s
 6. Keep architecture, ambiguity, security decisions, shared files, integration, and final acceptance with the lead.
 7. Validate with the narrowest executable check that can falsify the change.
 
-Delegation is available from the primary Codex thread. Use the native Codex subagent tool, spawn a fresh child thread with `fork_turns` set to `none`, and set `agent_type` to the exact underscore role name. Never use `codex fork`, `resume`, or a full-history fork for role delegation: full-history forks inherit the parent agent type and cannot select a Luna role. A lead running as a subagent does not receive the native spawn tool, so it must complete its assigned task without attempting nested delegation; fan out Luna work from the primary lead instead.
+Use Codex's native custom agents for delegation and set `agent_type` to the exact underscore Luna role name. The standalone role file supplies the child's model, reasoning effort, sandbox, and instructions. Do not emulate a role with `codex fork`, `resume`, model overrides, or copied instructions. On Codex 0.147, set `fork_turns` to `none` because that release cannot combine a custom role with a full-history fork.
 
 Each Luna packet contains only objective, scope, starting paths, preserved interfaces, constraints, acceptance criteria, validation, output format, and output bound. Luna roles never orchestrate, spawn, delegate, or communicate with the user.
 

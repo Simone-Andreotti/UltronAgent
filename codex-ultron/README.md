@@ -15,7 +15,9 @@ Small and well-scoped work stays in the lead. Luna is used only for bounded anal
 
 For requests that explicitly ask for internet or web research, external references, current documentation, library comparisons, or proven patterns, Ultron must make a fresh `luna_researcher` child its first external-evidence action. The lead waits for that bounded evidence packet before planning and only researches directly afterward to fill a specific gap. In the Codex CLI, pass `--search` or use the launcher's `-Search` switch to expose live web search to the lead and its researcher.
 
-Codex supports one delegation layer for this package: a primary lead can spawn Luna, but a lead launched as a subagent does not receive the native `spawn_agent` tool and cannot spawn sub-subagents. Plan any Luna fan-out in the primary lead thread. Custom Luna selection uses a fresh native child with `fork_turns = "none"` and the exact underscore `agent_type`; never combine a custom `agent_type` with a full-history fork because that fork inherits the parent role.
+Codex loads the three Luna specialties as first-class custom agents from `~/.codex/agents` or a trusted project's `.codex/agents`. Leads select the exact underscore role name through the native subagent workflow. Each standalone Luna TOML owns its model, reasoning effort, sandbox, and instructions, so no role alias, model override, or copied-instruction workaround is needed. The package still keeps Luna assignments bounded and non-orchestrating by policy.
+
+Codex CLI 0.147 still requires `fork_turns = "none"` when a spawn selects a custom `agent_type`; its full-history fork inherits the parent role. The package keeps that context-selection compatibility rule until the newer V2 behavior reaches the stable updater. This does not change Luna's status as a native custom agent.
 
 ## Install
 

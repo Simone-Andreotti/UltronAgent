@@ -80,10 +80,11 @@ foreach ($sourcePath in @("agents\ultron.toml", "profiles\ultron.config.toml", "
 
 foreach ($sourcePath in @("agents\edith.toml", "agents\jarvis.toml", "agents\ultron.toml", "profiles\edith.config.toml", "profiles\jarvis.config.toml", "profiles\ultron.config.toml", "instructions\edith.md", "instructions\jarvis.md", "instructions\ultron.md")) {
     $content = Get-Content (Join-Path $packageRoot $sourcePath) -Raw
-    Assert-True ($content -match 'Spawn a fresh child thread') "$sourcePath must require a fresh Codex child thread."
-    Assert-True ($content -match 'fork_turns.*none') "$sourcePath must disable full-history context for custom-agent spawns."
-    Assert-True ($content -match 'full-history fork') "$sourcePath must reject incompatible full-history role forks."
-    Assert-True ($content -match 'exact underscore identifier') "$sourcePath must preserve exact Codex custom-agent identifiers."
+    Assert-True ($content -match 'native Codex custom-agent') "$sourcePath must use native Codex custom agents."
+    Assert-True ($content -match 'standalone custom-agent file') "$sourcePath must delegate role configuration to the standalone agent file."
+    Assert-True ($content -match 'exact `agent_type`') "$sourcePath must preserve exact Codex custom-agent identifiers."
+    Assert-True ($content -match 'Codex 0\.147.*`fork_turns` to `none`') "$sourcePath must preserve the stable-runtime context compatibility rule."
+    Assert-True ($content -notmatch 'primary Codex thread|does not receive the native spawn') "$sourcePath contains an obsolete primary-thread restriction."
 }
 
 $skillRoot = Join-Path $packageRoot "skills\codex-ultron"
@@ -92,7 +93,9 @@ $metadata = (Get-Content (Join-Path $skillRoot "agents\openai.yaml") -Raw) -repl
 Assert-True ($skill -match '(?m)^name: codex-ultron$') "Skill name is invalid."
 Assert-True ($skill -match "Execute small, well-scoped work directly") "Skill is missing the direct execution path."
 Assert-True ($skill -match "Never overlap writers") "Skill must reject overlapping writers."
-Assert-True ($skill -match "primary Codex thread") "Skill must document the primary-thread delegation boundary."
+Assert-True ($skill -match "native custom agents") "Skill must use native Codex custom agents."
+Assert-True ($skill -match 'Codex 0\.147.*`fork_turns` to `none`') "Skill must preserve the stable-runtime context compatibility rule."
+Assert-True ($skill -notmatch 'primary Codex thread|does not receive the native spawn') "Skill contains an obsolete primary-thread restriction."
 Assert-True ($skill -match "first external-evidence action") "Skill must require Luna research before direct external research."
 Assert-True ($skill -match "gpt-5\.6-sol.*gpt-5\.6-terra.*gpt-5\.6-luna") "Skill model policy is incomplete."
 Assert-True ($metadata -match 'display_name: "Codex Ultron"') "Desktop skill metadata is missing."
