@@ -2,8 +2,8 @@
 param(
     [string]$Prompt,
     [string]$WorkingDirectory = (Get-Location).Path,
-    [switch]$Search,
-    [switch]$FullAccess
+    [switch]$Search = ($env:CODEX_ULTRON_LIVE_SEARCH -ne "false"),
+    [switch]$FullAccess = ($env:CODEX_ULTRON_FULL_ACCESS -eq "true")
 )
 
 $ErrorActionPreference = "Stop"
@@ -19,7 +19,7 @@ if (-not (Test-Path (Join-Path $codexHome "edith.config.toml"))) {
 $arguments = @(
     "--profile", "edith",
     "--model", "gpt-5.6-luna",
-    "--config", 'model_reasoning_effort="high"',
+    "--config", 'model_reasoning_effort="low"',
     "--cd", $WorkingDirectory
 )
 if ($Search) { $arguments += "--search" }

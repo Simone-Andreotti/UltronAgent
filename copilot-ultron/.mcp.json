@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "ultron-playwright": {
+      "type": "local",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@0.0.79"
+      ],
+      "tools": [
+        "*"
+      ]
+    }
+  }
+}

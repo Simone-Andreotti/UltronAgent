@@ -6,17 +6,17 @@
     "agents": {
       "luna-code-analyst": {
         "model": "gpt-5.6-luna",
-        "effortLevel": "max",
+        "effortLevel": "high",
         "contextTier": "default"
       },
       "luna-researcher": {
         "model": "gpt-5.6-luna",
-        "effortLevel": "max",
+        "effortLevel": "medium",
         "contextTier": "default"
       },
       "luna-worker": {
         "model": "gpt-5.6-luna",
-        "effortLevel": "max",
+        "effortLevel": "medium",
         "contextTier": "default"
       }
     }

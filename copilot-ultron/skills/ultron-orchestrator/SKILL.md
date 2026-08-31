@@ -1,7 +1,7 @@
 ---
 name: ultron-orchestrator
-description: 'Run the Ultron/Jarvis plan-first multi-agent workflow with Luna code-analysis, research, and worker subagents. Use when the user asks for Ultron, Jarvis, Luna, orchestration, architecture, complex implementation, debugging, refactoring, or coordinated agent work.'
-argument-hint: 'Describe the task and optionally choose Ultron or Jarvis.'
+description: 'Run the Ultron, Jarvis, or Edith plan-first multi-agent workflow with Luna code-analysis, research, and worker subagents. Use for orchestration, architecture, implementation, debugging, refactoring, or coordinated agent work.'
+argument-hint: 'Describe the task and optionally choose Ultron, Jarvis, or Edith.'
 user-invocable: true
 disable-model-invocation: false
 ---
@@ -16,14 +16,14 @@ Use the installed custom agents in `../../agents/` to reproduce the Codex orches
 2. Use `jarvis` for medium-complexity implementation, debugging, refactoring, and integration work.
 3. Use `ultron` for genuinely complex, ambiguous, architectural, high-risk, security-sensitive, or cross-system work.
 4. If the user explicitly names Edith, Jarvis, or Ultron, honor that choice.
-4. Keep the selected lead active through planning, integration, validation, and final response.
+5. Keep the selected lead active through planning, integration, validation, and final response.
 
 ## Workflow
 
 1. Execute small, well-scoped work directly in the lead. Do not create a plan or subagent call when a targeted local check can resolve it.
 2. For complex work, delegate to `luna-code-analyst` only when isolated analysis avoids substantial parent-context growth or parallelizes a material track.
 3. Delegate to `luna-researcher` only when unresolved external evidence affects a decision. Prefer one bounded question and primary sources.
-4. Before non-trivial implementation, create a concise `tasks/plans/<task-slug>.md` covering current architecture, intended design, preserved interfaces, ordered milestones and ownership, and validation.
+4. Before the first implementation edit for non-trivial work, create `tasks/plans/<task-slug>.md` with Current Architecture, Intended Design, Preserved Interfaces, checkbox Milestones, and Validation. Multi-file implementation, public-contract, dependency, configuration, permission, architecture, security-sensitive, or multi-stage validation work is non-trivial. Mark one item `(in progress)` and mark it `[x]` immediately after focused validation before activating the next; todo does not replace this file.
 5. Keep architectural, ambiguous, shared-file, security-sensitive, and integration-critical changes with the lead.
 6. Delegate only fully specified, narrow, non-overlapping milestones when isolation or parallelism is cheaper than direct lead execution. Invoke multiple subagents in one parallel batch when their tasks are independent; never parallelize dependencies or overlapping writers.
 7. Validate with the narrowest executable check that can falsify the change. The lead owns final acceptance.
@@ -45,7 +45,7 @@ Use the installed custom agents in `../../agents/` to reproduce the Codex orches
 
 ## Todo Discipline
 
-1. Use todo tracking when it improves execution; keep the functionality available to both leads.
+1. Use todo tracking when it improves execution; keep the functionality available to all three leads.
 2. Keep todo labels action-only and 2-5 words. Update statuses silently.
 3. Do not mirror a written `tasks/plans/` checklist in todo.
 
@@ -61,10 +61,11 @@ Subagents never orchestrate, spawn agents, coordinate with each other, or commun
 2. Inspect the owning code, nearby conventions, interfaces, and focused tests before changing an existing codebase.
 3. Adapt to existing architecture and style, preserve compatible behavior and contracts, and avoid unrelated rewrites.
 4. Deliver clean, readable, maintainable code with the simplest complete design and focused executable validation.
+5. When rendered web behavior is part of acceptance, use available browser or Playwright tools to exercise the flow and repeat it after changes; report an exact host or policy blocker when interactive validation is unavailable.
 
 ## Model Policy
 
-Use `gpt-5.6-luna` for Edith, `gpt-5.6-sol` for Ultron, `gpt-5.6-terra` for Jarvis, and `gpt-5.6-luna` with max reasoning for every Luna role. Keep every role on default context. Never select Copilot Auto, another model, or long context.
+Use `gpt-5.6-sol` with high reasoning for Ultron, `gpt-5.6-terra` with medium reasoning for Jarvis, and `gpt-5.6-luna` with low reasoning for Edith. Keep every Luna role on `gpt-5.6-luna` and default context; use high reasoning for code analysis and medium reasoning for research and implementation. Never select Copilot Auto, another model, or long context.
 
 ## Resources
 

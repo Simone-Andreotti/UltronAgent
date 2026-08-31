@@ -44,13 +44,18 @@ if [ -z "$agent" ]; then
 fi
 
 case "$agent" in
-    edith) profile="edith"; model="gpt-5.6-luna" ;;
-    jarvis) profile="jarvis"; model="gpt-5.6-terra" ;;
-    ultron) profile="ultron"; model="gpt-5.6-sol" ;;
+    edith) profile="edith"; model="gpt-5.6-luna"; effort="low" ;;
+    jarvis) profile="jarvis"; model="gpt-5.6-terra"; effort="medium" ;;
+    ultron) profile="ultron"; model="gpt-5.6-sol"; effort="high" ;;
     *) printf 'Unknown lead: %s\n' "$agent" >&2; exit 2 ;;
 esac
 
 codex_home=${CODEX_HOME:-"$HOME/.codex"}
 [ -f "$codex_home/$profile.config.toml" ] || { printf '%s\n' "$profile profile is not installed. Run install.sh first." >&2; exit 1; }
 
-exec codex --profile "$profile" --model "$model" --config 'model_reasoning_effort="high"' "$@"
+live_search_flag=--search
+full_access_flag=
+[ "${CODEX_ULTRON_LIVE_SEARCH:-true}" = "false" ] && live_search_flag=
+[ "${CODEX_ULTRON_FULL_ACCESS:-false}" = "true" ] && full_access_flag=--dangerously-bypass-approvals-and-sandbox
+
+exec codex --profile "$profile" --model "$model" --config "model_reasoning_effort=\"$effort\"" $live_search_flag $full_access_flag "$@"

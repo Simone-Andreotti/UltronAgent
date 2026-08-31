@@ -1,7 +1,7 @@
 {
   "name": "ultron-orchestrator",
   "description": "Ultron, Jarvis, and Edith orchestration leads with bounded Luna analysis, research, and implementation subagents.",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "keywords": [
     "orchestration",
     "ultron",
@@ -11,5 +11,6 @@
     "multi-agent"
   ],
   "agents": "agents/",
-  "skills": "skills/"
+  "skills": "skills/",
+  "mcpServers": ".mcp.json"
 }

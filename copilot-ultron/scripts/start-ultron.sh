@@ -13,10 +13,17 @@ for argument in "$@"; do
     esac
 done
 
+permission_flags="--allow-all-tools --allow-all-urls --disallow-temp-dir"
+sandbox_flag=--sandbox
+[ "${COPILOT_SANDBOX:-true}" = "false" ] && sandbox_flag=
+[ "${COPILOT_ALLOW_ALL:-false}" = "true" ] && permission_flags=--allow-all && sandbox_flag=--no-sandbox
+
 exec copilot \
     --plugin-dir "$package_root" \
     --agent ultron-orchestrator:ultron \
     --model gpt-5.6-sol \
-    --reasoning-effort xhigh \
+    --reasoning-effort high \
     --context default \
+    $sandbox_flag \
+    $permission_flags \
     "$@"

@@ -1,7 +1,16 @@
 #:schema https://developers.openai.com/codex/config-schema.json
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+web_search = "live"
+
+[sandbox_workspace_write]
+network_access = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
 
 [agents]
 enabled = true
 max_concurrent_threads_per_session = 6
 default_subagent_model = "gpt-5.6-luna"
-default_subagent_reasoning_effort = "max"
+default_subagent_reasoning_effort = "medium"

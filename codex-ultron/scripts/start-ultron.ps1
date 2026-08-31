@@ -2,8 +2,8 @@
 param(
     [string]$Prompt,
     [string]$WorkingDirectory = (Get-Location).Path,
-    [switch]$Search,
-    [switch]$FullAccess
+    [switch]$Search = ($env:CODEX_ULTRON_LIVE_SEARCH -ne "false"),
+    [switch]$FullAccess = ($env:CODEX_ULTRON_FULL_ACCESS -eq "true")
 )
 
 $ErrorActionPreference = "Stop"

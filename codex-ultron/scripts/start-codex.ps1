@@ -4,8 +4,8 @@ param(
     [string]$Agent,
     [string]$Prompt,
     [string]$WorkingDirectory = (Get-Location).Path,
-    [switch]$Search,
-    [switch]$FullAccess
+    [switch]$Search = ($env:CODEX_ULTRON_LIVE_SEARCH -ne "false"),
+    [switch]$FullAccess = ($env:CODEX_ULTRON_FULL_ACCESS -eq "true")
 )
 
 $ErrorActionPreference = "Stop"
@@ -14,9 +14,9 @@ if ($args.Count -gt 0) {
 }
 
 $leadDefinitions = @{
-    edith = @{ Profile = "edith"; Model = "gpt-5.6-luna"; Label = "Edith" }
-    jarvis = @{ Profile = "jarvis"; Model = "gpt-5.6-terra"; Label = "Jarvis" }
-    ultron = @{ Profile = "ultron"; Model = "gpt-5.6-sol"; Label = "Ultron" }
+    edith = @{ Profile = "edith"; Model = "gpt-5.6-luna"; Effort = "low"; Label = "Edith" }
+    jarvis = @{ Profile = "jarvis"; Model = "gpt-5.6-terra"; Effort = "medium"; Label = "Jarvis" }
+    ultron = @{ Profile = "ultron"; Model = "gpt-5.6-sol"; Effort = "high"; Label = "Ultron" }
 }
 
 if (-not $Agent) {
@@ -43,7 +43,7 @@ if (-not (Test-Path $profilePath)) {
 $arguments = @(
     "--profile", $selectedLead.Profile,
     "--model", $selectedLead.Model,
-    "--config", 'model_reasoning_effort="high"',
+    "--config", ('model_reasoning_effort="' + $selectedLead.Effort + '"'),
     "--cd", $WorkingDirectory
 )
 if ($Search) { $arguments += "--search" }

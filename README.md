@@ -1,6 +1,6 @@
 # UltronAgent
 
-UltronAgent is a portable multi-agent workflow for Codex and GitHub Copilot. It provides lead agents for different levels of work and bounded Luna agents for focused analysis, research, and implementation.
+UltronAgent is a portable multi-agent workflow for Codex and GitHub Copilot. It provides role-routed Sol, Terra, and Luna leads plus bounded Luna agents for focused analysis, research, and implementation. Both packages persist non-trivial implementation plans under `tasks/plans/`, expose browser testing, and keep small work on a direct low-token path.
 
 ## Packages
 
@@ -13,7 +13,7 @@ Each package includes its own installation and validation instructions in its RE
 
 Choose `codex-ultron`, `copilot-ultron`, or both. Run the commands from the repository root.
 
-Global installation applies the package to your user profile. Project installation applies it only to the project path you provide. Existing files are protected unless a force option is explicitly supplied.
+Global installation applies the package to your user profile. Project installation applies it only to the project path you provide. Both packages recognize their own marker-managed files on repeat runs, replace them, remove stale managed files, and preserve unrelated customizations. An unmanaged same-name collision still requires an explicit force option.
 
 ### Windows
 
@@ -26,6 +26,12 @@ Global installation:
 .\copilot-ultron\scripts\install.ps1
 ```
 
+For a native Copilot CLI plugin install or upgrade, use the replacement installer instead of the manual copy installer. It registers the package's versioned `ultron-agent` marketplace and avoids deprecated direct-plugin installation:
+
+```powershell
+.\copilot-ultron\scripts\install-plugin.ps1
+```
+
 Project installation:
 
 ```powershell
@@ -33,7 +39,7 @@ Project installation:
 .\copilot-ultron\scripts\install.ps1 -Scope Project -ProjectPath C:\path\to\project
 ```
 
-Add `-Force` to replace files that are already installed.
+Use `-Force` only to take ownership of an unmanaged same-name collision.
 
 ### Linux and macOS
 
@@ -46,6 +52,12 @@ sh ./codex-ultron/scripts/install.sh
 sh ./copilot-ultron/scripts/install.sh
 ```
 
+Native Copilot CLI plugin install or upgrade:
+
+```sh
+sh ./copilot-ultron/scripts/install-plugin.sh
+```
+
 Project installation:
 
 ```sh
@@ -53,9 +65,11 @@ sh ./codex-ultron/scripts/install.sh --scope project --project-path /path/to/pro
 sh ./copilot-ultron/scripts/install.sh --scope project --project-path /path/to/project
 ```
 
-Add `--force` to replace files that are already installed. The scripts detect Linux and macOS user configuration paths automatically.
+Use `--force` only to take ownership of an unmanaged same-name collision. The scripts detect Linux and macOS user configuration paths automatically.
 
-The Codex installer places global files under `~/.codex` and `~/.agents`, or project files under `.codex` and `.agents`. The Copilot installer places global files under `~/.copilot` and the VS Code user profile, or project files under `.github/agents`, `.github/prompts`, and `.github/skills`.
+The Codex installer places global files under `~/.codex` and `~/.agents`, or project agents, a non-destructive config example, and skills under `.codex` and `.agents`. The Copilot installer places global files under `~/.copilot` and the VS Code user profile, or project files under `.github/agents`, `.github/prompts`, and `.github/skills`.
+
+The supplied launchers intentionally default to live browser/network access, approval-free execution inside the active workspace, and no automatic filesystem access outside it. Copilot also bundles a pinned Playwright MCP fallback for CLI releases that do not yet expose their built-in browser server. Use explicit full-access overrides only for exceptional trusted tasks. Administrator-managed policy still takes precedence.
 
 ## Validation
 
@@ -66,4 +80,4 @@ Run the package checks from the repository root:
 .\copilot-ultron\scripts\test-package.ps1
 ```
 
-The repository intentionally excludes local workspace instructions, practice reviews, and planning notes from version control. These remain useful during development but are not part of the distributable packages.
+Repository implementation checklists live in `tasks/plans/`; they document development work and are not copied by either package installer.

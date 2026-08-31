@@ -2,8 +2,9 @@
 param(
     [string]$Prompt,
     [string]$WorkingDirectory = (Get-Location).Path,
-    [double]$MaxAiCredits = 0,
-    [switch]$AllowAll
+    [int]$MaxAiCredits = 0,
+    [switch]$AllowAll = ($env:COPILOT_ALLOW_ALL -eq "true"),
+    [switch]$Sandbox = ($env:COPILOT_SANDBOX -ne "false")
 )
 
 $ErrorActionPreference = "Stop"
@@ -20,7 +21,7 @@ $arguments = @(
     "--plugin-dir", $packageRoot,
     "--agent", "ultron-orchestrator:edith",
     "--model", "gpt-5.6-luna",
-    "--reasoning-effort", "xhigh",
+    "--reasoning-effort", "low",
     "--context", "default",
     "-C", $WorkingDirectory
 )
@@ -30,7 +31,10 @@ if ($MaxAiCredits -gt 0) {
 }
 
 if ($AllowAll) {
-    $arguments += "--allow-all"
+    $arguments += @("--allow-all", "--no-sandbox")
+} else {
+    $arguments += @("--allow-all-tools", "--allow-all-urls", "--disallow-temp-dir")
+    if ($Sandbox) { $arguments += "--sandbox" }
 }
 
 if ($Prompt) {
