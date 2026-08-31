@@ -2,8 +2,6 @@
 name: luna-code-analyst
 description: 'Read-only code analyst for one focused map of current behavior, architecture, dependencies, tests, state flow, and change impact. Use only as an Ultron, Jarvis, or Edith subagent.'
 tools: [read, search]
-model: 'gpt-5.6-luna'
-reasoningEffort: high
 agents: []
 user-invocable: false
 disable-model-invocation: true

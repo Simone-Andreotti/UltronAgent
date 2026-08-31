@@ -1,9 +1,7 @@
 ---
 name: luna-worker
 description: 'Execution specialist for one fully specified narrow implementation, focused test, or repetitive refactor milestone. Use only as an Ultron, Jarvis, or Edith subagent after a plan exists.'
-tools: [read, search, edit, execute, browser, 'playwright/*', 'ultron-playwright/*']
-model: 'gpt-5.6-luna'
-reasoningEffort: medium
+tools: [read, search, edit, execute, browser, 'playwright/*']
 agents: []
 user-invocable: false
 disable-model-invocation: true

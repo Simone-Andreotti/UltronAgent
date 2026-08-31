@@ -15,14 +15,6 @@ $expectedAgents = @(
     "luna-worker",
     "ultron"
 )
-$expectedModels = @{
-    "ultron" = "gpt-5.6-sol"
-    "jarvis" = "gpt-5.6-terra"
-    "edith" = "gpt-5.6-luna"
-    "luna-code-analyst" = "gpt-5.6-luna"
-    "luna-researcher" = "gpt-5.6-luna"
-    "luna-worker" = "gpt-5.6-luna"
-}
 $expectedEfforts = @{
     "ultron" = "high"
     "jarvis" = "medium"
@@ -84,8 +76,9 @@ foreach ($agentFile in $agentFiles) {
     Assert-True ($content -match "(?m)^tools:\s*\[") "Missing explicit tools in $($agentFile.Name)."
     Assert-True ($content -match "(?m)^agents:\s*") "Missing explicit subagent allowlist in $($agentFile.Name)."
     $agentName = ($nameMatch.Groups[1].Value -replace '^[''"]|[''"]$', '').Trim()
-    Assert-True ($content -match ("(?m)^model:\s*'" + [regex]::Escape($expectedModels[$agentName]) + "'\s*$")) "Invalid model in $($agentFile.Name)."
-    Assert-True ($content -match ("(?m)^reasoningEffort:\s*" + [regex]::Escape($expectedEfforts[$agentName]) + "\s*$")) "Invalid reasoning effort in $($agentFile.Name)."
+    Assert-True ($content -notmatch "(?m)^model:\s*") "$($agentFile.Name) must leave model selection to the host."
+    Assert-True ($content -notmatch "(?m)^reasoningEffort:\s*") "$($agentFile.Name) must leave reasoning selection to the host."
+    Assert-True ($content -notmatch "(?m)^tools:.*ultron-playwright/\*") "$($agentFile.Name) must not expose the CLI-only fallback namespace to VS Code."
 }
 
 Assert-True ((($agentNames | Sort-Object) -join "`n") -eq ($expectedAgents -join "`n")) "Agent names do not match the expected package roles."
@@ -105,7 +98,7 @@ foreach ($leadName in @("ultron", "jarvis", "edith")) {
     Assert-True ($content -match "(?m)^tools:.*\bagent\b") "$leadName must retain subagent functionality."
     Assert-True ($content -match "(?m)^tools:.*\bbrowser\b") "$leadName must expose VS Code browser tools."
     Assert-True ($content -match "(?m)^tools:.*playwright/\*") "$leadName must expose Copilot Playwright tools."
-    Assert-True ($content -match "(?m)^tools:.*ultron-playwright/\*") "$leadName must expose the packaged Playwright fallback."
+    Assert-True ($content -notmatch "(?m)^tools:.*ultron-playwright/\*") "$leadName must not expose the CLI-only fallback namespace to VS Code."
     Assert-True ($content -match "Keep each todo action-only and 2-5 words") "$leadName must keep todo text concise."
     Assert-True ($content -match "Silence applies only to chat, never to engineering rigor") "$leadName must preserve engineering rigor."
     Assert-True ($content -match "Adapt to its architecture and style") "$leadName must adapt to existing architecture."
@@ -152,7 +145,7 @@ Assert-True ($workerContent -match "Preserve the existing architecture, boundari
 Assert-True ($workerContent -match "clean, readable, maintainable code") "luna-worker must enforce maintainable code."
 Assert-True ($workerContent -match "(?m)^tools:.*\bbrowser\b") "luna-worker must expose VS Code browser tools."
 Assert-True ($workerContent -match "(?m)^tools:.*playwright/\*") "luna-worker must expose Copilot Playwright tools."
-Assert-True ($workerContent -match "(?m)^tools:.*ultron-playwright/\*") "luna-worker must expose the packaged Playwright fallback."
+Assert-True ($workerContent -notmatch "(?m)^tools:.*ultron-playwright/\*") "luna-worker must not expose the CLI-only fallback namespace to VS Code."
 
 $workspaceAgentRoot = Join-Path $workspaceRoot ".github\agents"
 if (Test-Path $workspaceAgentRoot) {
@@ -259,7 +252,8 @@ Assert-True ($readme -match 'Ultron uses `gpt-5\.6-sol` with high reasoning') "R
 Assert-True ($readme -match 'Jarvis uses `gpt-5\.6-terra` with medium reasoning') "README must document Jarvis model routing."
 Assert-True ($readme -match 'Edith uses `gpt-5\.6-luna` with low reasoning') "README must document Edith model routing."
 Assert-True ($readme -notmatch "max reasoning") "README must not advertise blanket maximum reasoning."
-Assert-True ($readme -match 'built-in `browser` tool set.*`ultron-playwright/\*`') "README must document browser tooling and the CLI fallback."
+Assert-True ($readme -match 'canonical `playwright/\*` namespace') "README must document the canonical Playwright namespace."
+Assert-True ($readme -match '@mcp playwright') "README must document the VS Code Playwright MCP installation."
 Assert-True ($readme -match '@playwright/mcp@0\.0\.79') "README must document the pinned Playwright MCP fallback."
 Assert-True ($readme -match "install-plugin\.ps1" -and $readme -match "install-plugin\.sh") "README must document native plugin replacement scripts."
 Assert-True ($readme -match "ultron-orchestrator@ultron-agent" -and $readme -match "deprecated direct-plugin installation") "README must document marketplace-based plugin replacement."

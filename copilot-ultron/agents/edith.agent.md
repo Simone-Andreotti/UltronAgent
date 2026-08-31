@@ -1,9 +1,7 @@
 ---
 name: edith
 description: 'Cost-aware lead for simpler implementation, debugging, and maintenance tasks. Uses bounded Luna subagents only when they add material value.'
-tools: [read, search, edit, execute, web, browser, 'playwright/*', 'ultron-playwright/*', todo, agent]
-model: 'gpt-5.6-luna'
-reasoningEffort: low
+tools: [read, search, edit, execute, web, browser, 'playwright/*', todo, agent]
 agents: [luna-code-analyst, luna-researcher, luna-worker]
 user-invocable: true
 disable-model-invocation: false

@@ -6,7 +6,7 @@ Nothing in this folder installs itself. The included installer only runs when yo
 
 ## Fixed Model Policy
 
-The package never uses Copilot Auto. Ultron uses `gpt-5.6-sol` with high reasoning, Jarvis uses `gpt-5.6-terra` with medium reasoning, and Edith uses `gpt-5.6-luna` with low reasoning. Every Luna role stays on `gpt-5.6-luna`: code analysis uses high reasoning, while research and implementation use medium. All roles stay on the `default` context tier and never use `long_context`. Copilot CLI honors the agent `reasoningEffort` field and the launchers pin it explicitly. VS Code pins the agent model; clients that do not expose effort in custom-agent frontmatter use the host's selected reasoning level instead.
+The package never uses Copilot Auto in its launchers. Ultron uses `gpt-5.6-sol` with high reasoning, Jarvis uses `gpt-5.6-terra` with medium reasoning, and Edith uses `gpt-5.6-luna` with low reasoning. Every Luna role stays on `gpt-5.6-luna`: code analysis uses high reasoning, while research and implementation use medium. All roles stay on the `default` context tier and never use `long_context`. Shared `.agent.md` files intentionally omit `model` and `reasoningEffort` because VS Code validates a narrower frontmatter schema and does not resolve API model slugs such as `gpt-5.6-sol`; VS Code uses the selected model and effort from its model picker. Copilot CLI launchers pin lead model and reasoning explicitly, while direct CLI/plugin sessions use their configured session or `~/.copilot/settings.json` defaults.
 
 Simple, well-scoped work stays in the lead agent. Plans and Luna subagents are reserved for complex work where isolation or parallelism is necessary. Every subagent assignment must have a narrow scope and output bound.
 
@@ -16,7 +16,7 @@ Use `/explain <task>` with any selected lead to turn on concise progress updates
 
 Todo tracking remains available to all three leads. They use it only when it improves execution, with action-only labels of 2-5 words and silent status updates; written plan checklists are not duplicated in todo.
 
-All leads and `luna-worker` can test rendered applications. VS Code uses the built-in `browser` tool set. Newer Copilot CLI releases can expose the built-in `playwright/*` namespace; this plugin also provides `ultron-playwright/*` through pinned `@playwright/mcp@0.0.79` for releases such as Copilot CLI 1.0.68 that do not enumerate the built-in server. For web-facing acceptance, the roles start or locate the app, exercise the requested flow, inspect page and console evidence, and repeat the browser check after changes.
+All leads and `luna-worker` can test rendered applications. Shared agents use the canonical `playwright/*` namespace. In VS Code, install the Playwright MCP server from Extensions by searching `@mcp playwright`, or configure a user MCP server with that name; otherwise VS Code correctly reports the server as missing. The native Copilot CLI plugin also bundles a pinned `ultron-playwright` fallback through `@playwright/mcp@0.0.79`, but that private plugin namespace is intentionally not listed in shared VS Code agent frontmatter. For web-facing acceptance, the roles start or locate the app, exercise the requested flow, inspect page and console evidence, and repeat the browser check after changes.
 
 For CLI sessions, use `--max-ai-credits` to set a hard session limit. The minimum accepted limit is 30 credits, and one in-flight call can exceed the limit before the next call is blocked.
 
@@ -104,7 +104,7 @@ sh scripts/install-plugin.sh
 
 The script removes only an existing `ultron-orchestrator` installation and `ultron-agent` registration, registers this package as a local marketplace, and installs `ultron-orchestrator@ultron-agent`. Repeat runs therefore replace the prior version without using deprecated direct-plugin installation. For a remote registered marketplace, use `copilot plugin update ultron-orchestrator@ultron-agent` instead.
 
-Native plugin installs and the supplied launchers load the packaged Playwright fallback. The manual copy installer is primarily for VS Code and unnamespaced agents; older CLI versions need the plugin or `--plugin-dir` launcher path for browser automation.
+Native plugin installs and the supplied launchers load the packaged Playwright fallback. The manual copy installer is primarily for VS Code and unnamespaced agents; older CLI versions need the plugin or `--plugin-dir` launcher path for browser automation. VS Code separately needs its Playwright MCP server installed or configured because it does not load a Copilot plugin's private MCP namespace.
 
 Restart Copilot CLI after installation. Plugin agents are namespaced. Their model frontmatter applies automatically, so no model flag is required:
 

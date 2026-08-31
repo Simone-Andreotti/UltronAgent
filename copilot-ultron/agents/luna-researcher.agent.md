@@ -2,8 +2,6 @@
 name: luna-researcher
 description: 'Read-only researcher for one targeted documentation, dependency, evidence, log, or proven-pattern question. Use only as an Ultron, Jarvis, or Edith subagent.'
 tools: [read, search, web]
-model: 'gpt-5.6-luna'
-reasoningEffort: medium
 agents: []
 user-invocable: false
 disable-model-invocation: true
