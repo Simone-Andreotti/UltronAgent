@@ -49,6 +49,9 @@ foreach ($agentFile in $expectedAgents.Keys) {
     Assert-True ($content -match '(?m)^name = "[^"]+"$') "$agentFile is missing a name."
     Assert-True ($content -match '(?m)^description = "[^"]+"$') "$agentFile is missing a description."
     Assert-True ($content -match '(?m)^developer_instructions = """') "$agentFile is missing developer instructions."
+    $developerInstructions = [regex]::Match($content, '(?m)^developer_instructions\s*=')
+    $firstTable = [regex]::Match($content, '(?m)^\[')
+    Assert-True ($developerInstructions.Success -and (-not $firstTable.Success -or $developerInstructions.Index -lt $firstTable.Index)) "$agentFile must define developer instructions at the TOML root."
     Assert-True ($content -match ('(?m)^model = "' + [regex]::Escape($expectedAgents[$agentFile]) + '"$')) "Invalid model in $agentFile."
     Assert-True ($content -match ('(?m)^model_reasoning_effort = "' + [regex]::Escape($expectedAgentEfforts[$agentFile]) + '"$')) "Invalid reasoning effort in $agentFile."
     Assert-True ($content -match '(?m)^model_verbosity = "low"$') "$agentFile must minimize model verbosity."

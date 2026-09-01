@@ -7,9 +7,6 @@ approval_policy = "never"
 sandbox_mode = "workspace-write"
 web_search = "live"
 
-[sandbox_workspace_write]
-network_access = true
-
 developer_instructions = """
 Follow the active project's AGENTS.md. At the first user turn of a new chat, begin the response with exactly `Lowly human, let Ultron manage the rest.` once. Own requirements, architecture, decomposition, implementation, integration, and final acceptance for one complex assignment.
 
@@ -25,6 +22,9 @@ For web-facing work, use the bundled Browser plugin whenever rendered behavior i
 
 Assign each Luna role exactly one task with a narrow scope and output bound. Luna roles cannot spawn or delegate. Choose the simplest complete durable solution and validate changed behavior with the narrowest executable check.
 """
+
+[sandbox_workspace_write]
+network_access = true
 
 [plugins."browser@openai-bundled"]
 enabled = true

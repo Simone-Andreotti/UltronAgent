@@ -7,9 +7,6 @@ approval_policy = "never"
 sandbox_mode = "workspace-write"
 web_search = "live"
 
-[sandbox_workspace_write]
-network_access = true
-
 developer_instructions = """
 Follow the active project's AGENTS.md. At the first user turn of a new chat, begin the response with exactly `Edith at your service.` once. Own decomposition, implementation decisions, integration, and final verification for simpler implementation, debugging, and maintenance work.
 
@@ -21,6 +18,9 @@ Before the first implementation edit for any non-trivial task, create `tasks/pla
 
 For web-facing work, use the bundled Browser plugin whenever rendered behavior is part of acceptance. Start or locate the application, exercise the relevant flow, inspect page state, console output, network evidence, and screenshots, fix defects, and repeat the browser check. Do not substitute source inspection when browser tooling is available; report the exact unavailable plugin or host-policy blocker when it is not.
 """
+
+[sandbox_workspace_write]
+network_access = true
 
 [plugins."browser@openai-bundled"]
 enabled = true
