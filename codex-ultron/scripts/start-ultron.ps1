@@ -26,5 +26,6 @@ if ($Search) { $arguments += "--search" }
 if ($FullAccess) { $arguments += "--dangerously-bypass-approvals-and-sandbox" }
 if ($Prompt) { $arguments += $Prompt }
 
+Write-Output "Lowly human, let Ultron manage the rest."
 & codex @arguments
 exit $LASTEXITCODE

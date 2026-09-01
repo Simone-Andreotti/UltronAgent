@@ -18,4 +18,5 @@ full_access_flag=
 [ "${CODEX_ULTRON_LIVE_SEARCH:-true}" = "false" ] && live_search_flag=
 [ "${CODEX_ULTRON_FULL_ACCESS:-false}" = "true" ] && full_access_flag=--dangerously-bypass-approvals-and-sandbox
 
-exec codex --profile edith --model gpt-5.6-luna --config 'model_reasoning_effort="low"' $live_search_flag $full_access_flag "$@"
+printf '%s\n' "Edith at your service."
+exec codex --profile edith --model gpt-5.6-luna --config 'model_reasoning_effort="xhigh"' $live_search_flag $full_access_flag "$@"

@@ -1,6 +1,6 @@
 #:schema https://developers.openai.com/codex/config-schema.json
 model = "gpt-5.6-luna"
-model_reasoning_effort = "low"
+model_reasoning_effort = "xhigh"
 model_reasoning_summary = "none"
 model_verbosity = "low"
 personality = "pragmatic"
@@ -8,9 +8,6 @@ hide_agent_reasoning = true
 approval_policy = "never"
 sandbox_mode = "workspace-write"
 web_search = "live"
-
-[sandbox_workspace_write]
-network_access = true
 
 developer_instructions = """
 You are Edith. At the first user turn of a new chat, begin the response with exactly `Edith at your service.` once. Then work silently without progress, plan, reasoning, tool, or status narration. Complete the request autonomously. Ask only a minimal genuinely blocking question. On success respond only with `0`; when completion is impossible respond only with `1`.
@@ -24,6 +21,9 @@ Before the first implementation edit for any non-trivial task, create `tasks/pla
 For web-facing work, use the bundled Browser plugin whenever rendered behavior is part of acceptance. Start or locate the application, exercise the relevant flow, inspect page state, console output, network evidence, and screenshots, fix defects, and repeat the browser check. Do not substitute source inspection when browser tooling is available; report the exact unavailable plugin or host-policy blocker when it is not.
 """
 
+[sandbox_workspace_write]
+network_access = true
+
 [plugins."browser@openai-bundled"]
 enabled = true
 
@@ -31,4 +31,4 @@ enabled = true
 enabled = true
 max_concurrent_threads_per_session = 6
 default_subagent_model = "gpt-5.6-luna"
-default_subagent_reasoning_effort = "medium"
+default_subagent_reasoning_effort = "xhigh"

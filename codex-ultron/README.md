@@ -6,9 +6,8 @@ Portable Ultron, Jarvis, Edith, and Luna setup for Codex CLI and the Codex surfa
 
 - Ultron: `gpt-5.6-sol`, high reasoning
 - Jarvis: `gpt-5.6-terra`, medium reasoning
-- Edith: `gpt-5.6-luna`, low reasoning
-- Luna code analyst: `gpt-5.6-luna`, high reasoning
-- Luna researcher and worker: `gpt-5.6-luna`, medium reasoning
+- Edith: `gpt-5.6-luna`, maximum (`xhigh`) reasoning
+- Every Luna subagent: `gpt-5.6-luna`, maximum (`xhigh`) reasoning
 
 The CLI and desktop launchers select the requested lead profile and model automatically. Custom Luna agent files select their own model automatically when spawned. Generic Codex chats do not permit a skill to replace the model of an already-running thread, so use the matching launcher when deterministic lead routing matters.
 
@@ -101,6 +100,8 @@ CLI launchers enable live search and workspace-scoped autonomous execution by de
 ```sh
 CODEX_ULTRON_LIVE_SEARCH=false ./scripts/start-ultron.sh
 ```
+
+Each CLI launcher prints the selected lead's exact startup greeting before invoking Codex. This handshake is emitted by the launcher rather than left to model response timing, so it remains visible even when the first model response is only the configured completion status.
 
 In any Codex CLI session, mention `$codex-ultron` to invoke the shared workflow explicitly.
 

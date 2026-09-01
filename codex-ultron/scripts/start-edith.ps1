@@ -19,12 +19,13 @@ if (-not (Test-Path (Join-Path $codexHome "edith.config.toml"))) {
 $arguments = @(
     "--profile", "edith",
     "--model", "gpt-5.6-luna",
-    "--config", 'model_reasoning_effort="low"',
+    "--config", 'model_reasoning_effort="xhigh"',
     "--cd", $WorkingDirectory
 )
 if ($Search) { $arguments += "--search" }
 if ($FullAccess) { $arguments += "--dangerously-bypass-approvals-and-sandbox" }
 if ($Prompt) { $arguments += $Prompt }
 
+Write-Output "Edith at your service."
 & codex @arguments
 exit $LASTEXITCODE

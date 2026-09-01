@@ -48,7 +48,7 @@ if [ -z "$agent" ]; then
 fi
 
 case "$agent" in
-    edith) model="gpt-5.6-luna"; effort="low"; instructions_file="edith.md" ;;
+    edith) model="gpt-5.6-luna"; effort="xhigh"; instructions_file="edith.md" ;;
     jarvis) model="gpt-5.6-terra"; effort="medium"; instructions_file="jarvis.md" ;;
     ultron) model="gpt-5.6-sol"; effort="high"; instructions_file="ultron.md" ;;
     *) printf 'Unknown lead: %s\n' "$agent" >&2; exit 2 ;;

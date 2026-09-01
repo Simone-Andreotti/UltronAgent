@@ -1,7 +1,7 @@
 name = "luna_worker"
 description = "Luna execution specialist for one fully specified narrow implementation, focused test, or repetitive refactor milestone."
 model = "gpt-5.6-luna"
-model_reasoning_effort = "medium"
+model_reasoning_effort = "xhigh"
 model_verbosity = "low"
 approval_policy = "never"
 sandbox_mode = "workspace-write"

@@ -14,12 +14,12 @@ $expectedAgents = @{
     "luna_worker.toml" = "gpt-5.6-luna"
 }
 $expectedAgentEfforts = @{
-    "edith.toml" = "low"
+    "edith.toml" = "xhigh"
     "ultron.toml" = "high"
     "jarvis.toml" = "medium"
-    "luna_code_analyst.toml" = "high"
-    "luna_researcher.toml" = "medium"
-    "luna_worker.toml" = "medium"
+    "luna_code_analyst.toml" = "xhigh"
+    "luna_researcher.toml" = "xhigh"
+    "luna_worker.toml" = "xhigh"
 }
 $expectedProfiles = @{
     "edith.config.toml" = "gpt-5.6-luna"
@@ -27,7 +27,7 @@ $expectedProfiles = @{
     "jarvis.config.toml" = "gpt-5.6-terra"
 }
 $expectedProfileEfforts = @{
-    "edith.config.toml" = "low"
+    "edith.config.toml" = "xhigh"
     "ultron.config.toml" = "high"
     "jarvis.config.toml" = "medium"
 }
@@ -82,6 +82,9 @@ Assert-True ($worker -match 'Do not claim browser validation from source inspect
 
 foreach ($profileFile in $expectedProfiles.Keys) {
     $content = (Get-Content (Join-Path $profileRoot $profileFile) -Raw) -replace "`r`n", "`n"
+    $developerInstructions = [regex]::Match($content, '(?m)^developer_instructions\s*=')
+    $firstTable = [regex]::Match($content, '(?m)^\[')
+    Assert-True ($developerInstructions.Success -and (-not $firstTable.Success -or $developerInstructions.Index -lt $firstTable.Index)) "$profileFile must define developer instructions at the TOML root."
     Assert-True ($content -match ('(?m)^model = "' + [regex]::Escape($expectedProfiles[$profileFile]) + '"$')) "Invalid model in $profileFile."
     Assert-True ($content -match ('(?m)^model_reasoning_effort = "' + [regex]::Escape($expectedProfileEfforts[$profileFile]) + '"$')) "$profileFile has the wrong reasoning effort."
     Assert-True ($content -match '(?m)^model_verbosity = "low"$') "$profileFile must minimize model verbosity."
@@ -93,7 +96,7 @@ foreach ($profileFile in $expectedProfiles.Keys) {
     Assert-True ($content -match 'respond only with `0`') "$profileFile must use binary success output."
     Assert-True ($content -match 'respond only with `1`') "$profileFile must use binary failure output."
     Assert-True ($content -match '(?m)^default_subagent_model = "gpt-5\.6-luna"$') "$profileFile must default subagents to Luna."
-    Assert-True ($content -match '(?m)^default_subagent_reasoning_effort = "medium"$') "$profileFile must use an efficient Luna default."
+    Assert-True ($content -match '(?m)^default_subagent_reasoning_effort = "xhigh"$') "$profileFile must use maximum Luna reasoning by default."
     Assert-True ($content -notmatch '(?m)^\[agents\.(edith|jarvis|ultron|luna_code_analyst|luna_researcher|luna_worker)\]$') "$profileFile must not redeclare standalone custom agent roles."
 }
 
@@ -103,6 +106,8 @@ Assert-True ($sharedConfig -match '(?m)^approval_policy = "never"$') "Example co
 Assert-True ($sharedConfig -match '(?m)^sandbox_mode = "workspace-write"$') "Example config must keep execution inside the workspace."
 Assert-True ($sharedConfig -match '(?m)^\[sandbox_workspace_write\]\nnetwork_access = true$') "Example config must allow network access inside the workspace sandbox."
 Assert-True ($sharedConfig -match '(?m)^\[plugins\."browser@openai-bundled"\]\nenabled = true$') "Example config must enable the bundled Browser plugin."
+Assert-True ($sharedConfig -match '(?m)^default_subagent_model = "gpt-5\.6-luna"$') "Example config must default subagents to Luna."
+Assert-True ($sharedConfig -match '(?m)^default_subagent_reasoning_effort = "xhigh"$') "Example config must use maximum Luna reasoning by default."
 
 $leadContracts = @{
     edith = "Edith at your service."
@@ -160,16 +165,16 @@ Assert-True ($readme -match 'CODEX_ULTRON_LIVE_SEARCH=false ./scripts/start-ultr
 Assert-True ($readme -match 'CODEX_ULTRON_FULL_ACCESS=true') "README must document the explicit POSIX full-access opt-in."
 
 $launchers = @{
-    "start-edith.ps1" = @("edith", "gpt-5.6-luna", "low")
+    "start-edith.ps1" = @("edith", "gpt-5.6-luna", "xhigh")
     "start-ultron.ps1" = @("ultron", "gpt-5.6-sol", "high")
     "start-jarvis.ps1" = @("jarvis", "gpt-5.6-terra", "medium")
-    "start-edith.sh" = @("edith", "gpt-5.6-luna", "low")
+    "start-edith.sh" = @("edith", "gpt-5.6-luna", "xhigh")
     "start-ultron.sh" = @("ultron", "gpt-5.6-sol", "high")
     "start-jarvis.sh" = @("jarvis", "gpt-5.6-terra", "medium")
-    "start-edith-app.ps1" = @("edith", "gpt-5.6-luna", "low")
+    "start-edith-app.ps1" = @("edith", "gpt-5.6-luna", "xhigh")
     "start-ultron-app.ps1" = @("ultron", "gpt-5.6-sol", "high")
     "start-jarvis-app.ps1" = @("jarvis", "gpt-5.6-terra", "medium")
-    "start-edith-app.sh" = @("edith", "gpt-5.6-luna", "low")
+    "start-edith-app.sh" = @("edith", "gpt-5.6-luna", "xhigh")
     "start-ultron-app.sh" = @("ultron", "gpt-5.6-sol", "high")
     "start-jarvis-app.sh" = @("jarvis", "gpt-5.6-terra", "medium")
 }
@@ -199,10 +204,25 @@ foreach ($launcher in $launchers.Keys) {
         Assert-True ($content -match 'CODEX_ULTRON_FULL_ACCESS.*(eq "true"|:-false)') "$launcher must keep system-wide access opt-in."
     }
 }
+$cliGreetings = @{
+    "start-edith.ps1" = "Edith at your service."
+    "start-jarvis.ps1" = "Jarvis at your service."
+    "start-ultron.ps1" = "Lowly human, let Ultron manage the rest."
+    "start-edith.sh" = "Edith at your service."
+    "start-jarvis.sh" = "Jarvis at your service."
+    "start-ultron.sh" = "Lowly human, let Ultron manage the rest."
+    "start-codex.ps1" = "Jarvis at your service."
+    "start-codex.sh" = "Jarvis at your service."
+}
+foreach ($launcher in $cliGreetings.Keys) {
+    $content = Get-Content (Join-Path $PSScriptRoot $launcher) -Raw
+    $greeting = [regex]::Escape($cliGreetings[$launcher])
+    Assert-True ($content -match ('(?s)' + $greeting + '.*(?:& codex|exec codex)')) "$launcher must emit its greeting before starting Codex."
+}
 $unifiedCli = Get-Content (Join-Path $PSScriptRoot "start-codex.ps1") -Raw
 Assert-True ($unifiedCli -match "Choose a Codex lead:") "Unified CLI launcher is missing its lead menu."
 foreach ($mapping in @(
-    'edith = @{ Profile = "edith"; Model = "gpt-5\.6-luna"; Effort = "low"',
+    'edith = @{ Profile = "edith"; Model = "gpt-5\.6-luna"; Effort = "xhigh"',
     'jarvis = @{ Profile = "jarvis"; Model = "gpt-5\.6-terra"; Effort = "medium"',
     'ultron = @{ Profile = "ultron"; Model = "gpt-5\.6-sol"; Effort = "high"'
 )) {
@@ -211,7 +231,7 @@ foreach ($mapping in @(
 $unifiedApp = Get-Content (Join-Path $PSScriptRoot "start-codex-app.ps1") -Raw
 Assert-True ($unifiedApp -match "Choose a Codex lead for the desktop app:") "Unified app launcher is missing its lead menu."
 foreach ($mapping in @(
-    'edith = @{ Model = "gpt-5\.6-luna"; Effort = "low"; Instructions = "edith\.md"',
+    'edith = @{ Model = "gpt-5\.6-luna"; Effort = "xhigh"; Instructions = "edith\.md"',
     'jarvis = @{ Model = "gpt-5\.6-terra"; Effort = "medium"; Instructions = "jarvis\.md"',
     'ultron = @{ Model = "gpt-5\.6-sol"; Effort = "high"; Instructions = "ultron\.md"'
 )) {
@@ -220,14 +240,14 @@ foreach ($mapping in @(
 $unifiedShell = Get-Content (Join-Path $PSScriptRoot "start-codex.sh") -Raw
 $unifiedAppShell = Get-Content (Join-Path $PSScriptRoot "start-codex-app.sh") -Raw
 foreach ($mapping in @(
-    'edith\) profile="edith"; model="gpt-5\.6-luna"; effort="low"',
+    'edith\) profile="edith"; model="gpt-5\.6-luna"; effort="xhigh"',
     'jarvis\) profile="jarvis"; model="gpt-5\.6-terra"; effort="medium"',
     'ultron\) profile="ultron"; model="gpt-5\.6-sol"; effort="high"'
 )) {
     Assert-True ($unifiedShell -match $mapping) "Unified shell launcher has an invalid role mapping: $mapping"
 }
 foreach ($mapping in @(
-    'edith\) model="gpt-5\.6-luna"; effort="low"; instructions_file="edith\.md"',
+    'edith\) model="gpt-5\.6-luna"; effort="xhigh"; instructions_file="edith\.md"',
     'jarvis\) model="gpt-5\.6-terra"; effort="medium"; instructions_file="jarvis\.md"',
     'ultron\) model="gpt-5\.6-sol"; effort="high"; instructions_file="ultron\.md"'
 )) {

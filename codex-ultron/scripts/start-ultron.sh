@@ -18,4 +18,5 @@ full_access_flag=
 [ "${CODEX_ULTRON_LIVE_SEARCH:-true}" = "false" ] && live_search_flag=
 [ "${CODEX_ULTRON_FULL_ACCESS:-false}" = "true" ] && full_access_flag=--dangerously-bypass-approvals-and-sandbox
 
+printf '%s\n' "Lowly human, let Ultron manage the rest."
 exec codex --profile ultron --model gpt-5.6-sol --config 'model_reasoning_effort="high"' $live_search_flag $full_access_flag "$@"

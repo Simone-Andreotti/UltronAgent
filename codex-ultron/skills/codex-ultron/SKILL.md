@@ -39,4 +39,4 @@ Each Luna packet contains only objective, scope, starting paths, preserved inter
 
 ## Model Policy
 
-Ultron uses `gpt-5.6-sol` with high reasoning; Jarvis uses `gpt-5.6-terra` with medium reasoning; Edith uses `gpt-5.6-luna` with low reasoning. Every Luna role stays on `gpt-5.6-luna`: code analysis uses high reasoning, while research and implementation use medium. Profiles and launchers select lead models; standalone agent TOMLs own Luna routing.
+Ultron uses `gpt-5.6-sol` with high reasoning; Jarvis uses `gpt-5.6-terra` with medium reasoning; Edith uses `gpt-5.6-luna` with maximum (`xhigh`) reasoning. Every Luna role stays on `gpt-5.6-luna` with maximum (`xhigh`) reasoning. Profiles and launchers select lead models; standalone agent TOMLs own Luna routing.
