@@ -14,9 +14,10 @@ for argument in "$@"; do
 done
 
 live_search_flag=--search
-full_access_flag=
+full_access_flag=--dangerously-bypass-approvals-and-sandbox
+sandbox_mode_args=
 [ "${CODEX_ULTRON_LIVE_SEARCH:-true}" = "false" ] && live_search_flag=
-[ "${CODEX_ULTRON_FULL_ACCESS:-false}" = "true" ] && full_access_flag=--dangerously-bypass-approvals-and-sandbox
+[ "${CODEX_ULTRON_FULL_ACCESS:-true}" = "false" ] && { full_access_flag=; sandbox_mode_args='--config sandbox_mode="workspace-write"'; }
 
 printf '%s\n' "Edith at your service."
-exec codex --profile edith --model gpt-5.6-luna --config 'model_reasoning_effort="xhigh"' $live_search_flag $full_access_flag "$@"
+exec codex --profile edith --model gpt-5.6-luna --config 'model_reasoning_effort="xhigh"' $live_search_flag $full_access_flag $sandbox_mode_args "$@"

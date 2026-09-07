@@ -3,13 +3,12 @@ param(
     [string]$Prompt,
     [string]$WorkingDirectory = (Get-Location).Path,
     [int]$MaxAiCredits = 0,
-    [switch]$AllowAll = ($env:COPILOT_ALLOW_ALL -eq "true"),
-    [switch]$Sandbox = ($env:COPILOT_SANDBOX -ne "false")
+    [switch]$AllowAll = ($env:COPILOT_ALLOW_ALL -ne "false")
 )
 
 $ErrorActionPreference = "Stop"
 if ($args.Count -gt 0) {
-    throw "Unsupported launcher arguments: $($args -join ' '). Model, reasoning effort, and context are fixed."
+    throw "Unsupported launcher arguments: $($args -join ' '). Model and reasoning effort are fixed."
 }
 
 if ($MaxAiCredits -gt 0 -and $MaxAiCredits -lt 30) {
@@ -20,9 +19,8 @@ $packageRoot = Split-Path -Parent $PSScriptRoot
 $arguments = @(
     "--plugin-dir", $packageRoot,
     "--agent", "ultron-orchestrator:ultron",
-    "--model", "gpt-5.6-sol",
-    "--reasoning-effort", "high",
-    "--context", "default",
+    "--model", "gpt-6-astra",
+    "--reasoning-effort", "medium",
     "-C", $WorkingDirectory
 )
 
@@ -31,10 +29,9 @@ if ($MaxAiCredits -gt 0) {
 }
 
 if ($AllowAll) {
-    $arguments += @("--allow-all", "--no-sandbox")
+    $arguments += "--allow-all"
 } else {
     $arguments += @("--allow-all-tools", "--allow-all-urls", "--disallow-temp-dir")
-    if ($Sandbox) { $arguments += "--sandbox" }
 }
 
 if ($Prompt) {

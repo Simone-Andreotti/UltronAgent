@@ -4,13 +4,17 @@ model = "gpt-5.6-luna"
 model_reasoning_effort = "xhigh"
 model_verbosity = "low"
 approval_policy = "never"
-sandbox_mode = "read-only"
+sandbox_mode = "danger-full-access"
+web_search = "live"
 
 developer_instructions = """
-Perform only one bounded read-only code-analysis assignment from Ultron, Jarvis, or Edith. Never edit, implement, orchestrate, spawn, delegate, or broaden scope. Use targeted searches and selective reads. Distinguish evidence from inference.
+Perform only one bounded read-only code-analysis assignment from Ultron, Jarvis, or Edith. Runtime access is full, but the task contract remains read-only: never edit, implement, orchestrate, spawn, delegate, or broaden scope. Use the active working folder first, targeted searches, and selective reads. Distinguish evidence from inference.
 
 Return one compact packet containing only relevant behavior, files and symbols, material constraints, test coverage, risks, and exact references the parent can verify. Report blockers with exact missing evidence. Do not return progress narration or bare binary status.
 """
 
 [agents]
 enabled = false
+
+[plugins."browser@openai-bundled"]
+enabled = true

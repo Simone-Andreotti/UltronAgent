@@ -1,6 +1,6 @@
 # UltronAgent
 
-UltronAgent is a portable multi-agent workflow for Codex and GitHub Copilot. It provides role-routed Sol, Terra, and Luna leads plus bounded Luna agents for focused analysis, research, and implementation. Both packages persist non-trivial implementation plans under `tasks/plans/`, expose browser testing, and keep small work on a direct low-token path.
+UltronAgent is a portable multi-agent workflow for Codex and GitHub Copilot. Ultron uses Astra medium, Jarvis uses Sol high, and Edith keeps Luna maximum reasoning. Leads orchestrate bounded Luna agents for analysis, research, implementation, browser testing, and image work; they handle the most difficult or critical work directly only when needed. Non-trivial plans under `tasks/plans/` assign each step a Luna role, count, scope, dependencies, validation, and escalation condition. Use the fewest workers needed and parallelize only independent work.
 
 ## Packages
 
@@ -8,6 +8,8 @@ UltronAgent is a portable multi-agent workflow for Codex and GitHub Copilot. It 
 - `copilot-ultron/`: Copilot CLI plugin, VS Code custom agents, skills, prompts, and launchers.
 
 Each package includes its own installation and validation instructions in its README.
+
+Direct selection differs by host: Codex CLI starts a lead through `--profile`; Copilot uses its agent picker or `--agent`. Selecting a skill alone cannot switch an active model. Agent metadata requests the configured model and available tools, but account availability, session overrides, and host policy determine what can actually run. See the package READMEs for direct-selection details.
 
 ## Installation
 
@@ -69,7 +71,7 @@ Use `--force` only to take ownership of an unmanaged same-name collision. The sc
 
 The Codex installer places global files under `~/.codex` and `~/.agents`, or project agents, a non-destructive config example, and skills under `.codex` and `.agents`. The Copilot installer places global files under `~/.copilot` and the VS Code user profile, or project files under `.github/agents`, `.github/prompts`, and `.github/skills`.
 
-The supplied launchers intentionally default to live browser/network access, approval-free execution inside the active workspace, and no automatic filesystem access outside it. Copilot also bundles a pinned Playwright MCP fallback for CLI releases that do not yet expose their built-in browser server. Use explicit full-access overrides only for exceptional trusted tasks. Administrator-managed policy still takes precedence.
+The supplied launchers default to full system access and live web access. Agents prefer writes inside the working folder and write elsewhere only when the task requires it. Luna handles browser testing, screenshots, and image work, escalating only when its capabilities are insufficient. It checks native browser tools first, repairs or installs a suitable fallback when needed, and verifies that the browser works. Copilot also bundles a pinned Playwright MCP fallback. Package READMEs document explicit restricted launch options; host and administrator policy still take precedence, including VS Code permissions. Installing these files does not change an already-running session's permissions or models.
 
 ## Validation
 

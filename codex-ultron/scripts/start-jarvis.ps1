@@ -3,7 +3,7 @@ param(
     [string]$Prompt,
     [string]$WorkingDirectory = (Get-Location).Path,
     [switch]$Search = ($env:CODEX_ULTRON_LIVE_SEARCH -ne "false"),
-    [switch]$FullAccess = ($env:CODEX_ULTRON_FULL_ACCESS -eq "true")
+    [switch]$FullAccess = ($env:CODEX_ULTRON_FULL_ACCESS -ne "false")
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,12 +18,16 @@ if (-not (Test-Path (Join-Path $codexHome "jarvis.config.toml"))) {
 
 $arguments = @(
     "--profile", "jarvis",
-    "--model", "gpt-5.6-terra",
-    "--config", 'model_reasoning_effort="medium"',
+    "--model", "gpt-5.6-sol",
+    "--config", 'model_reasoning_effort="high"',
     "--cd", $WorkingDirectory
 )
 if ($Search) { $arguments += "--search" }
-if ($FullAccess) { $arguments += "--dangerously-bypass-approvals-and-sandbox" }
+if ($FullAccess) {
+    $arguments += "--dangerously-bypass-approvals-and-sandbox"
+} else {
+    $arguments += "--config", 'sandbox_mode="workspace-write"', "--config", 'sandbox_workspace_write.network_access=true'
+}
 if ($Prompt) { $arguments += $Prompt }
 
 Write-Output "Jarvis at your service."

@@ -5,7 +5,7 @@ param(
     [string]$Prompt,
     [string]$WorkingDirectory = (Get-Location).Path,
     [switch]$Search = ($env:CODEX_ULTRON_LIVE_SEARCH -ne "false"),
-    [switch]$FullAccess = ($env:CODEX_ULTRON_FULL_ACCESS -eq "true")
+    [switch]$FullAccess = ($env:CODEX_ULTRON_FULL_ACCESS -ne "false")
 )
 
 $ErrorActionPreference = "Stop"
@@ -15,8 +15,8 @@ if ($args.Count -gt 0) {
 
 $leadDefinitions = @{
     edith = @{ Profile = "edith"; Model = "gpt-5.6-luna"; Effort = "xhigh"; Label = "Edith"; Greeting = "Edith at your service." }
-    jarvis = @{ Profile = "jarvis"; Model = "gpt-5.6-terra"; Effort = "medium"; Label = "Jarvis"; Greeting = "Jarvis at your service." }
-    ultron = @{ Profile = "ultron"; Model = "gpt-5.6-sol"; Effort = "high"; Label = "Ultron"; Greeting = "Lowly human, let Ultron manage the rest." }
+    jarvis = @{ Profile = "jarvis"; Model = "gpt-5.6-sol"; Effort = "high"; Label = "Jarvis"; Greeting = "Jarvis at your service." }
+    ultron = @{ Profile = "ultron"; Model = "gpt-6-astra"; Effort = "medium"; Label = "Ultron"; Greeting = "Lowly human, let Ultron manage the rest." }
 }
 
 if (-not $Agent) {
@@ -47,7 +47,11 @@ $arguments = @(
     "--cd", $WorkingDirectory
 )
 if ($Search) { $arguments += "--search" }
-if ($FullAccess) { $arguments += "--dangerously-bypass-approvals-and-sandbox" }
+if ($FullAccess) {
+    $arguments += "--dangerously-bypass-approvals-and-sandbox"
+} else {
+    $arguments += "--config", 'sandbox_mode="workspace-write"', "--config", 'sandbox_workspace_write.network_access=true'
+}
 if ($Prompt) { $arguments += $Prompt }
 
 Write-Output $selectedLead.Greeting

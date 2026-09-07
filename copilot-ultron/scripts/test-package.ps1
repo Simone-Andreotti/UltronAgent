@@ -16,12 +16,20 @@ $expectedAgents = @(
     "ultron"
 )
 $expectedEfforts = @{
-    "ultron" = "high"
-    "jarvis" = "medium"
-    "edith" = "low"
+    "ultron" = "medium"
+    "jarvis" = "high"
+    "edith" = "xhigh"
     "luna-code-analyst" = "high"
     "luna-researcher" = "medium"
     "luna-worker" = "medium"
+}
+$expectedModels = @{
+    "ultron" = "gpt-6-astra"
+    "jarvis" = "gpt-5.6-sol"
+    "edith" = "gpt-5.6-luna"
+    "luna-code-analyst" = "gpt-5.6-luna"
+    "luna-researcher" = "gpt-5.6-luna"
+    "luna-worker" = "gpt-5.6-luna"
 }
 
 function Assert-True {
@@ -57,28 +65,54 @@ Assert-True (($mcpConfig.mcpServers.'ultron-playwright'.tools -join "") -eq "*")
 Assert-True (Test-Path (Join-Path $packageRoot $manifest.agents)) "Manifest agents path does not exist."
 Assert-True (Test-Path (Join-Path $packageRoot $manifest.skills)) "Manifest skills path does not exist."
 Assert-True (Test-Path $promptRoot) "Package prompts path does not exist."
-Assert-True ($config.model -eq "gpt-5.6-sol") "Example config must default to GPT-5.6 Sol."
+Assert-True ($config.model -eq "gpt-6-astra") "Example config must default to GPT-6 Astra."
 Assert-True ($config.contextTier -eq "default") "Example config must use default context."
 foreach ($lunaName in $expectedAgents | Where-Object { $_ -like "luna-*" }) {
-    $lunaConfig = $config.subagents.agents.$lunaName
+    $lunaConfig = $config.subagents.agents."ultron-orchestrator:$lunaName"
     Assert-True ($lunaConfig.model -eq "gpt-5.6-luna") "$lunaName must use GPT-5.6 Luna."
     Assert-True ($lunaConfig.effortLevel -eq $expectedEfforts[$lunaName]) "$lunaName has the wrong reasoning effort."
     Assert-True ($lunaConfig.contextTier -eq "default") "$lunaName must use default context."
+}
+
+$yamlParser = @'
+import json
+import sys
+import yaml
+
+path = sys.argv[1]
+text = open(path, encoding="utf-8").read()
+parts = text.split("---", 2)
+if len(parts) != 3:
+    raise SystemExit(f"{path}: missing YAML frontmatter")
+metadata = yaml.safe_load(parts[1])
+if not isinstance(metadata, dict):
+    raise SystemExit(f"{path}: frontmatter must be a mapping")
+print(json.dumps(metadata))
+'@
+
+function Get-AgentFrontmatter {
+    param([Parameter(Mandatory)][string]$Path)
+    $json = & python -c $yamlParser $Path
+    if ($LASTEXITCODE -ne 0) {
+        throw "Unable to parse YAML frontmatter in $Path."
+    }
+    return ($json | ConvertFrom-Json)
 }
 
 $agentFiles = @(Get-ChildItem $agentRoot -Filter "*.agent.md" | Sort-Object Name)
 $agentNames = @()
 foreach ($agentFile in $agentFiles) {
     $content = Get-Content $agentFile.FullName -Raw
+    $frontmatter = Get-AgentFrontmatter -Path $agentFile.FullName
     $nameMatch = [regex]::Match($content, "(?m)^name:\s*([^\r\n]+)\r?$")
     Assert-True $nameMatch.Success "Missing agent name in $($agentFile.Name)."
     $agentNames += ($nameMatch.Groups[1].Value -replace '^[''"]|[''"]$', '').Trim()
-    Assert-True ($content -match "(?m)^tools:\s*\[") "Missing explicit tools in $($agentFile.Name)."
+    Assert-True (($null -eq $frontmatter.tools) -or ($frontmatter.tools -contains "*")) "$($agentFile.Name) must use the host's full tool set."
     Assert-True ($content -match "(?m)^agents:\s*") "Missing explicit subagent allowlist in $($agentFile.Name)."
     $agentName = ($nameMatch.Groups[1].Value -replace '^[''"]|[''"]$', '').Trim()
-    Assert-True ($content -notmatch "(?m)^model:\s*") "$($agentFile.Name) must leave model selection to the host."
-    Assert-True ($content -notmatch "(?m)^reasoningEffort:\s*") "$($agentFile.Name) must leave reasoning selection to the host."
-    Assert-True ($content -notmatch "(?m)^tools:.*ultron-playwright/\*") "$($agentFile.Name) must not expose the CLI-only fallback namespace to VS Code."
+    Assert-True ($frontmatter.model -eq $expectedModels[$agentName]) "$($agentFile.Name) has the wrong model metadata."
+    Assert-True ($frontmatter.reasoningEffort -eq $expectedEfforts[$agentName]) "$($agentFile.Name) has the wrong reasoning metadata."
+    Assert-True ($frontmatter.'reasoning-effort' -eq $frontmatter.reasoningEffort) "$($agentFile.Name) must preserve effort on CLI 1.0.68 as well as current CLI."
 }
 
 Assert-True ((($agentNames | Sort-Object) -join "`n") -eq ($expectedAgents -join "`n")) "Agent names do not match the expected package roles."
@@ -89,16 +123,11 @@ foreach ($leadName in @("ultron", "jarvis", "edith")) {
     foreach ($workerName in $expectedAgents | Where-Object { $_ -like "luna-*" }) {
         Assert-True ($content -match [regex]::Escape($workerName)) "$leadName does not allow $workerName."
     }
-    Assert-True ($content -match "Execute small.*directly") "$leadName is missing the direct execution path."
+    Assert-True ($content -match "Delegate routine .* exact Luna role") "$leadName is missing routine Luna delegation."
     Assert-True ($content -match "Do not emit routine intermediary") "$leadName must suppress routine intermediary narration."
     Assert-True ($content -match 'respond only with `0`') "$leadName must use the binary success response."
     Assert-True ($content -match 'respond only with `1`') "$leadName must use the binary failure response."
     Assert-True ($content -match "fewest words possible") "$leadName must keep blocking questions minimal."
-    Assert-True ($content -match "(?m)^tools:.*\btodo\b") "$leadName must retain todo functionality."
-    Assert-True ($content -match "(?m)^tools:.*\bagent\b") "$leadName must retain subagent functionality."
-    Assert-True ($content -match "(?m)^tools:.*\bbrowser\b") "$leadName must expose VS Code browser tools."
-    Assert-True ($content -match "(?m)^tools:.*playwright/\*") "$leadName must expose Copilot Playwright tools."
-    Assert-True ($content -notmatch "(?m)^tools:.*ultron-playwright/\*") "$leadName must not expose the CLI-only fallback namespace to VS Code."
     Assert-True ($content -match "Keep each todo action-only and 2-5 words") "$leadName must keep todo text concise."
     Assert-True ($content -match "Silence applies only to chat, never to engineering rigor") "$leadName must preserve engineering rigor."
     Assert-True ($content -match "Adapt to its architecture and style") "$leadName must adapt to existing architecture."
@@ -112,7 +141,9 @@ foreach ($leadName in @("ultron", "jarvis", "edith")) {
     Assert-True ($content -match "Never parallelize dependent work or overlapping writers") "$leadName must restrict unsafe parallel work."
     Assert-True ($content -match "exactly one detailed, narrowly scoped task") "$leadName must provide one narrow task per subagent."
     Assert-True ($content -match "cannot spawn or delegate to another agent") "$leadName must forbid recursive delegation."
-    Assert-True ($content -match "high reasoning for code analysis and medium reasoning for research and implementation") "$leadName must route Luna reasoning by role."
+    Assert-True ($content -match "Code analysis uses high reasoning; research and implementation use medium reasoning") "$leadName must route Luna reasoning by role."
+    Assert-True ($content -match "normally one") "$leadName must use the minimum worker count by default."
+    Assert-True ($content -match "plan milestone names exactly one Luna role, worker count, owned scope, dependencies, executable check, and escalation condition") "$leadName plan milestones need complete role contracts."
     Assert-True ($content -match "repeat the browser check") "$leadName must require browser revalidation."
     Assert-True ($content -match 'When `/explain` is invoked') "$leadName must support explain mode."
     Assert-True ($content -match "private chain-of-thought") "$leadName explain mode must protect private reasoning."
@@ -133,9 +164,9 @@ foreach ($leadName in $leadGreetings.Keys) {
 foreach ($workerName in $expectedAgents | Where-Object { $_ -like "luna-*" }) {
     $content = Get-Content (Join-Path $agentRoot "$workerName.agent.md") -Raw
     Assert-True ($content -match "(?m)^agents:\s*\[\]") "$workerName must not invoke subagents."
-    Assert-True ($content -notmatch "(?m)^tools:.*\bagent\b") "$workerName must not have the agent tool."
     Assert-True ($content -match "(?m)^user-invocable:\s*false") "$workerName must be hidden from users."
-    Assert-True ($content -match "(?m)^disable-model-invocation:\s*true") "$workerName must require an explicit parent allowlist."
+    Assert-True ($content -match "(?m)^disable-model-invocation:\s*false") "$workerName must be available as a child agent."
+    Assert-True ($content -match "never invoke agent, task, handoff, or delegation tools") "$workerName must prevent recursive delegation by instruction."
     Assert-True ($content -match "Do not emit progress") "$workerName must suppress progress narration."
     Assert-True ($content -match "Report blockers explicitly") "$workerName must preserve blocker signaling."
 }
@@ -143,12 +174,9 @@ foreach ($workerName in $expectedAgents | Where-Object { $_ -like "luna-*" }) {
 $workerContent = Get-Content (Join-Path $agentRoot "luna-worker.agent.md") -Raw
 Assert-True ($workerContent -match "Preserve the existing architecture, boundaries, conventions, public contracts, and behavior") "luna-worker must preserve existing architecture."
 Assert-True ($workerContent -match "clean, readable, maintainable code") "luna-worker must enforce maintainable code."
-Assert-True ($workerContent -match "(?m)^tools:.*\bbrowser\b") "luna-worker must expose VS Code browser tools."
-Assert-True ($workerContent -match "(?m)^tools:.*playwright/\*") "luna-worker must expose Copilot Playwright tools."
-Assert-True ($workerContent -notmatch "(?m)^tools:.*ultron-playwright/\*") "luna-worker must not expose the CLI-only fallback namespace to VS Code."
 
 $workspaceAgentRoot = Join-Path $workspaceRoot ".github\agents"
-if (Test-Path $workspaceAgentRoot) {
+if (Test-Path (Join-Path $workspaceAgentRoot ".ultron-orchestrator-agents")) {
     foreach ($agentName in $expectedAgents) {
         $packagedAgent = Get-Content (Join-Path $agentRoot "$agentName.agent.md") -Raw
         $workspaceAgent = Get-Content (Join-Path $workspaceAgentRoot "$agentName.agent.md") -Raw
@@ -158,7 +186,7 @@ if (Test-Path $workspaceAgentRoot) {
 
 $packagedSkill = Get-Content (Join-Path $packageRoot "skills\ultron-orchestrator\SKILL.md") -Raw
 $workspaceSkillPath = Join-Path $workspaceRoot ".github\skills\ultron-orchestrator\SKILL.md"
-if (Test-Path $workspaceSkillPath) {
+if ((Test-Path (Join-Path $workspaceAgentRoot ".ultron-orchestrator-agents")) -and (Test-Path $workspaceSkillPath)) {
     $workspaceSkill = Get-Content $workspaceSkillPath -Raw
     Assert-True ((($packagedSkill -replace "`r`n", "`n").TrimEnd()) -ceq (($workspaceSkill -replace "`r`n", "`n").TrimEnd())) "Packaged and workspace skill definitions differ."
 }
@@ -169,13 +197,17 @@ Assert-True ($packagedSkill -match "multiple subagents in one parallel batch") "
 Assert-True ($packagedSkill -match "exactly one detailed, narrowly scoped task") "Orchestrator skill must enforce one narrow task per subagent."
 Assert-True ($packagedSkill -match "Subagents never orchestrate, spawn agents") "Orchestrator skill must forbid recursive delegation."
 Assert-True ($packagedSkill -match "Engineering Quality") "Orchestrator skill must preserve engineering quality."
-Assert-True ($packagedSkill -match "high reasoning for code analysis and medium reasoning for research and implementation") "Orchestrator skill must route Luna reasoning by role."
+Assert-True ($packagedSkill -match "use high reasoning for code analysis and medium reasoning for research and implementation") "Orchestrator skill must route Luna reasoning by role."
 Assert-True ($packagedSkill -match "available browser or Playwright tools") "Orchestrator skill must require browser validation when applicable."
 Assert-True ($packagedSkill -match "## Explain Mode") "Orchestrator skill is missing explain mode guidance."
+Assert-True ($packagedSkill -match "normally one") "Orchestrator skill must use the minimum worker count."
+Assert-True ($packagedSkill -match "plan milestone names exactly one Luna role, count, owned scope, dependencies, executable check, and escalation condition") "Orchestrator skill must define milestone role contracts."
+Assert-True ($packagedSkill -match "native browser tooling first") "Orchestrator skill must define browser fallback routing."
+Assert-True ($packagedSkill -match "host-supplied image capability") "Orchestrator skill must define image-tool fallback behavior."
 
 $packagedExplainPrompt = Get-Content (Join-Path $promptRoot "explain.prompt.md") -Raw
 $workspaceExplainPromptPath = Join-Path $workspaceRoot ".github\prompts\explain.prompt.md"
-if (Test-Path $workspaceExplainPromptPath) {
+if ((Test-Path (Join-Path $workspaceAgentRoot ".ultron-orchestrator-agents")) -and (Test-Path $workspaceExplainPromptPath)) {
     $workspaceExplainPrompt = Get-Content $workspaceExplainPromptPath -Raw
     Assert-True ((($packagedExplainPrompt -replace "`r`n", "`n").TrimEnd()) -ceq (($workspaceExplainPrompt -replace "`r`n", "`n").TrimEnd())) "Packaged and workspace explain prompts differ."
 }
@@ -185,8 +217,8 @@ Assert-True ($packagedExplainPrompt -notmatch "(?m)^model:") "Explain prompt mus
 Assert-True ($packagedExplainPrompt -match "private chain-of-thought") "Explain prompt must protect private reasoning."
 
 $nativeAgents = @{
-    "ultron.toml" = "gpt-5.6-sol"
-    "jarvis.toml" = "gpt-5.6-terra"
+    "ultron.toml" = "gpt-6-astra"
+    "jarvis.toml" = "gpt-5.6-sol"
     "luna_code_analyst.toml" = "gpt-5.6-luna"
     "luna_researcher.toml" = "gpt-5.6-luna"
     "luna_worker.toml" = "gpt-5.6-luna"
@@ -195,19 +227,13 @@ foreach ($nativeAgent in $nativeAgents.Keys) {
     $content = Get-Content (Join-Path $codexPackageRoot "agents\$nativeAgent") -Raw
     Assert-True ($content -match ('(?m)^model = "' + [regex]::Escape($nativeAgents[$nativeAgent]) + '"\r?$')) "Invalid native model in $nativeAgent."
 }
-foreach ($leadName in @("ultron", "jarvis")) {
-    $content = Get-Content (Join-Path $codexPackageRoot "agents\$leadName.toml") -Raw
-    Assert-True ($content -match "Execute small.*directly") "$leadName native role is missing the efficient direct path."
-    Assert-True ($content -notmatch 'Give `luna_code_analyst` one tightly scoped') "$leadName native role must not require analysis delegation for every implementation task."
-}
-
 $launchers = @{
-    "start-edith.ps1" = @{ Model = "gpt-5.6-luna"; Effort = "low" }
-    "start-ultron.ps1" = @{ Model = "gpt-5.6-sol"; Effort = "high" }
-    "start-jarvis.ps1" = @{ Model = "gpt-5.6-terra"; Effort = "medium" }
-    "start-edith.sh" = @{ Model = "gpt-5.6-luna"; Effort = "low" }
-    "start-ultron.sh" = @{ Model = "gpt-5.6-sol"; Effort = "high" }
-    "start-jarvis.sh" = @{ Model = "gpt-5.6-terra"; Effort = "medium" }
+    "start-edith.ps1" = @{ Model = "gpt-5.6-luna"; Effort = "xhigh" }
+    "start-ultron.ps1" = @{ Model = "gpt-6-astra"; Effort = "medium" }
+    "start-jarvis.ps1" = @{ Model = "gpt-5.6-sol"; Effort = "high" }
+    "start-edith.sh" = @{ Model = "gpt-5.6-luna"; Effort = "xhigh" }
+    "start-ultron.sh" = @{ Model = "gpt-6-astra"; Effort = "medium" }
+    "start-jarvis.sh" = @{ Model = "gpt-5.6-sol"; Effort = "high" }
 }
 foreach ($launcherName in $launchers.Keys) {
     $content = Get-Content (Join-Path $PSScriptRoot $launcherName) -Raw
@@ -215,18 +241,17 @@ foreach ($launcherName in $launchers.Keys) {
     if ($launcherName -like "*.ps1") {
         Assert-True ($content -match ('"--model",\s*"' + [regex]::Escape($launchers[$launcherName].Model) + '"')) "Invalid model in $launcherName."
         Assert-True ($content -match ('"--reasoning-effort",\s*"' + [regex]::Escape($launchers[$launcherName].Effort) + '"')) "Invalid reasoning effort in $launcherName."
-        Assert-True ($content -match '"--context",\s*"default"') "Missing default context in $launcherName."
         Assert-True ($content -match '\$arguments \+= @\("-i", \$Prompt\)') "$launcherName must pass its initial prompt through Copilot interactive mode."
     } else {
         Assert-True ($content -match ('--model\s+' + [regex]::Escape($launchers[$launcherName].Model))) "Invalid model in $launcherName."
         Assert-True ($content -match ('--reasoning-effort\s+' + [regex]::Escape($launchers[$launcherName].Effort))) "Invalid reasoning effort in $launcherName."
-        Assert-True ($content -match '--context\s+default') "Missing default context in $launcherName."
     }
-    Assert-True ($content -match 'allow-all-tools') "$launcherName must allow tools without widening path access."
-    Assert-True ($content -match 'allow-all-urls') "$launcherName must allow web access without widening path access."
-    Assert-True ($content -match 'disallow-temp-dir') "$launcherName must exclude the system temporary directory by default."
-    Assert-True ($content -match '--sandbox') "$launcherName must enable the local OS sandbox by default."
-    Assert-True ($content -notmatch 'allow-all-paths') "$launcherName must not widen access beyond the working directory."
+    Assert-True ($content -match 'allow-all-tools') "$launcherName must preserve restricted tool access."
+    Assert-True ($content -match 'allow-all-urls') "$launcherName must preserve restricted web access."
+    Assert-True ($content -match 'disallow-temp-dir') "$launcherName must preserve restricted temporary-directory access."
+    Assert-True ($content -match '--allow-all') "$launcherName must default to full system access."
+    Assert-True ($content -notmatch '--context|--sandbox|--no-sandbox') "$launcherName contains unsupported context or sandbox flags."
+    Assert-True ($content -notmatch 'allow-all-paths') "$launcherName must use Copilot's supported full-access flag."
 }
 
 foreach ($launcherName in @("start-edith.ps1", "start-ultron.ps1", "start-jarvis.ps1")) {
@@ -235,30 +260,68 @@ foreach ($launcherName in @("start-edith.ps1", "start-ultron.ps1", "start-jarvis
     Assert-True ($content -notmatch '\[string\]\$Model|\[string\]\$Context|\$ReasoningEffort') "$launcherName permits routing overrides."
     Assert-True ($content -match '\$args\.Count -gt 0') "$launcherName does not reject unsupported arguments."
     Assert-True ($content -match '\[int\]\$MaxAiCredits') "$launcherName must pass whole, culture-independent credit limits."
-    Assert-True ($content -match '\[switch\]\$AllowAll = \(\$env:COPILOT_ALLOW_ALL -eq "true"\)') "$launcherName must keep system-wide paths opt-in."
-    Assert-True ($content -match '\[switch\]\$Sandbox = \(\$env:COPILOT_SANDBOX -ne "false"\)') "$launcherName must enable sandboxing by default."
+    Assert-True ($content -match '\[switch\]\$AllowAll = \(\$env:COPILOT_ALLOW_ALL -ne "false"\)') "$launcherName must default to full system paths."
+    Assert-True ($content -notmatch 'COPILOT_SANDBOX|\$Sandbox') "$launcherName must not use unsupported sandbox flags."
+}
+
+$launcherMockRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("copilot-ultron-launcher-test-" + [guid]::NewGuid().ToString("N"))
+try {
+    New-Item -ItemType Directory -Path $launcherMockRoot | Out-Null
+    $fakeCopilot = Join-Path $launcherMockRoot "copilot.cmd"
+    $launcherLog = Join-Path $launcherMockRoot "arguments.txt"
+    @'
+@echo off
+> "%COPILOT_LAUNCHER_LOG%" echo %*
+exit /b 0
+'@ | Set-Content -Path $fakeCopilot -Encoding ASCII
+
+    $savedPath = $env:PATH
+    $savedAllowAll = $env:COPILOT_ALLOW_ALL
+    try {
+        $env:PATH = "$launcherMockRoot;$savedPath"
+        $env:COPILOT_LAUNCHER_LOG = $launcherLog
+        Remove-Item Env:COPILOT_ALLOW_ALL -ErrorAction SilentlyContinue
+        & (Join-Path $PSScriptRoot "start-ultron.ps1") -WorkingDirectory $PSScriptRoot
+        $fullAccessArguments = Get-Content $launcherLog -Raw
+        Assert-True ($fullAccessArguments -match '(?m)(^|\s)--allow-all(\s|$)') "Launcher default must pass --allow-all."
+        Assert-True ($fullAccessArguments -notmatch '(?m)(^|\s)--allow-all-tools(\s|$)') "Launcher default must not use restricted tool flags."
+
+        $env:COPILOT_ALLOW_ALL = "false"
+        Remove-Item $launcherLog -Force
+        & (Join-Path $PSScriptRoot "start-ultron.ps1") -WorkingDirectory $PSScriptRoot
+        $restrictedArguments = Get-Content $launcherLog -Raw
+        Assert-True ($restrictedArguments -match '(?m)(^|\s)--allow-all-tools(\s|$)') "Restricted opt-out must preserve tool access."
+        Assert-True ($restrictedArguments -match '(?m)(^|\s)--allow-all-urls(\s|$)') "Restricted opt-out must preserve URL access."
+        Assert-True ($restrictedArguments -match '(?m)(^|\s)--disallow-temp-dir(\s|$)') "Restricted opt-out must preserve temporary-directory isolation."
+        Assert-True ($restrictedArguments -notmatch '(?m)(^|\s)--allow-all(\s|$)') "Restricted opt-out must not pass --allow-all."
+    } finally {
+        if ($null -eq $savedPath) { Remove-Item Env:PATH -ErrorAction SilentlyContinue } else { $env:PATH = $savedPath }
+        if ($null -eq $savedAllowAll) { Remove-Item Env:COPILOT_ALLOW_ALL -ErrorAction SilentlyContinue } else { $env:COPILOT_ALLOW_ALL = $savedAllowAll }
+        Remove-Item Env:COPILOT_LAUNCHER_LOG -ErrorAction SilentlyContinue
+    }
+} finally {
+    Remove-Item $launcherMockRoot -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 foreach ($launcherName in @("start-edith.sh", "start-ultron.sh", "start-jarvis.sh")) {
     $content = Get-Content (Join-Path $PSScriptRoot $launcherName) -Raw
-    Assert-True ($content -match '--model\|--model=\*\|--context\|--context=\*\|--reasoning-effort\|--reasoning-effort=\*') "$launcherName does not reject routing overrides."
+    Assert-True ($content -match '--model\|--model=\*\|--reasoning-effort\|--reasoning-effort=\*') "$launcherName does not reject routing overrides."
     Assert-True ($content -match '--agent\|--agent=\*\|--plugin-dir\|--plugin-dir=\*') "$launcherName permits agent or plugin routing overrides."
-    Assert-True ($content -match '\$\{COPILOT_ALLOW_ALL:-false\}') "$launcherName must keep system-wide paths opt-in."
-    Assert-True ($content -match '\$\{COPILOT_SANDBOX:-true\}') "$launcherName must enable sandboxing by default."
+    Assert-True ($content -match '\$\{COPILOT_ALLOW_ALL:-true\}') "$launcherName must default to full system paths."
 }
 
 $readme = Get-Content (Join-Path $packageRoot "README.md") -Raw
-Assert-True ($readme -match 'Ultron uses `gpt-5\.6-sol` with high reasoning') "README must document Ultron model routing."
-Assert-True ($readme -match 'Jarvis uses `gpt-5\.6-terra` with medium reasoning') "README must document Jarvis model routing."
-Assert-True ($readme -match 'Edith uses `gpt-5\.6-luna` with low reasoning') "README must document Edith model routing."
-Assert-True ($readme -notmatch "max reasoning") "README must not advertise blanket maximum reasoning."
+Assert-True ($readme -match 'Ultron requests `gpt-6-astra` with medium reasoning') "README must document Ultron model routing."
+Assert-True ($readme -match 'Jarvis requests `gpt-5\.6-sol` with high reasoning') "README must document Jarvis model routing."
+Assert-True ($readme -match 'Edith requests `gpt-5\.6-luna` with maximum \(`xhigh`\) reasoning') "README must document Edith model routing."
 Assert-True ($readme -match 'canonical `playwright/\*` namespace') "README must document the canonical Playwright namespace."
 Assert-True ($readme -match '@mcp playwright') "README must document the VS Code Playwright MCP installation."
 Assert-True ($readme -match '@playwright/mcp@0\.0\.79') "README must document the pinned Playwright MCP fallback."
 Assert-True ($readme -match "install-plugin\.ps1" -and $readme -match "install-plugin\.sh") "README must document native plugin replacement scripts."
 Assert-True ($readme -match "ultron-orchestrator@ultron-agent" -and $readme -match "deprecated direct-plugin installation") "README must document marketplace-based plugin replacement."
 Assert-True ($readme -match "Repeat runs are managed upgrades") "README must document managed copy-install upgrades."
-Assert-True ($readme -match "local OS sandbox") "README must document the workspace sandbox default."
+Assert-True ($readme -match 'supported full-access flag, `--allow-all`') "README must document the full-access launcher default."
+Assert-True ($readme -match "COPILOT_ALLOW_ALL=false") "README must document the restricted launcher opt-out."
 
 foreach ($script in Get-ChildItem $PSScriptRoot -Filter "*.ps1") {
     $tokens = $null

@@ -1,6 +1,6 @@
 #:schema https://developers.openai.com/codex/config-schema.json
 approval_policy = "never"
-sandbox_mode = "workspace-write"
+sandbox_mode = "danger-full-access"
 web_search = "live"
 
 [sandbox_workspace_write]

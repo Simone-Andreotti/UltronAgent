@@ -7,29 +7,29 @@ $agentRoot = Join-Path $packageRoot "agents"
 $profileRoot = Join-Path $packageRoot "profiles"
 $expectedAgents = @{
     "edith.toml" = "gpt-5.6-luna"
-    "ultron.toml" = "gpt-5.6-sol"
-    "jarvis.toml" = "gpt-5.6-terra"
+    "ultron.toml" = "gpt-6-astra"
+    "jarvis.toml" = "gpt-5.6-sol"
     "luna_code_analyst.toml" = "gpt-5.6-luna"
     "luna_researcher.toml" = "gpt-5.6-luna"
     "luna_worker.toml" = "gpt-5.6-luna"
 }
 $expectedAgentEfforts = @{
     "edith.toml" = "xhigh"
-    "ultron.toml" = "high"
-    "jarvis.toml" = "medium"
+    "ultron.toml" = "medium"
+    "jarvis.toml" = "high"
     "luna_code_analyst.toml" = "xhigh"
     "luna_researcher.toml" = "xhigh"
     "luna_worker.toml" = "xhigh"
 }
 $expectedProfiles = @{
     "edith.config.toml" = "gpt-5.6-luna"
-    "ultron.config.toml" = "gpt-5.6-sol"
-    "jarvis.config.toml" = "gpt-5.6-terra"
+    "ultron.config.toml" = "gpt-6-astra"
+    "jarvis.config.toml" = "gpt-5.6-sol"
 }
 $expectedProfileEfforts = @{
     "edith.config.toml" = "xhigh"
-    "ultron.config.toml" = "high"
-    "jarvis.config.toml" = "medium"
+    "ultron.config.toml" = "medium"
+    "jarvis.config.toml" = "high"
 }
 
 function Assert-True {
@@ -55,15 +55,27 @@ foreach ($agentFile in $expectedAgents.Keys) {
     Assert-True ($content -match ('(?m)^model = "' + [regex]::Escape($expectedAgents[$agentFile]) + '"$')) "Invalid model in $agentFile."
     Assert-True ($content -match ('(?m)^model_reasoning_effort = "' + [regex]::Escape($expectedAgentEfforts[$agentFile]) + '"$')) "Invalid reasoning effort in $agentFile."
     Assert-True ($content -match '(?m)^model_verbosity = "low"$') "$agentFile must minimize model verbosity."
+    Assert-True ($content -match '(?m)^sandbox_mode = "danger-full-access"$') "$agentFile must default to full access."
+    Assert-True ($content -match '(?m)^web_search = "live"$') "$agentFile must enable live web access."
+    Assert-True ($content -match '(?m)^\[plugins\."browser@openai-bundled"\]\nenabled = true$') "$agentFile must enable the bundled Browser plugin."
 }
 
 foreach ($leadFile in @("edith.toml", "jarvis.toml", "ultron.toml")) {
     $content = (Get-Content (Join-Path $agentRoot $leadFile) -Raw) -replace "`r`n", "`n"
     Assert-True ($content -match '(?m)^approval_policy = "never"$') "$leadFile must run without approval prompts."
-    Assert-True ($content -match '(?m)^sandbox_mode = "workspace-write"$') "$leadFile must keep writes inside the workspace."
-    Assert-True ($content -match '(?m)^\[sandbox_workspace_write\]\nnetwork_access = true$') "$leadFile must allow network access inside the workspace sandbox."
+    Assert-True ($content -match '(?m)^sandbox_mode = "danger-full-access"$') "$leadFile must default to full access."
     Assert-True ($content -match '(?m)^web_search = "live"$') "$leadFile must enable live web access."
     Assert-True ($content -match '(?m)^\[plugins\."browser@openai-bundled"\]\nenabled = true$') "$leadFile must enable the bundled Browser plugin."
+    Assert-True ($content -match 'work silently without progress, plan, reasoning, tool, or status narration') "$leadFile must use the silent output contract."
+    Assert-True ($content -match 'respond only with `0`') "$leadFile must use binary success output."
+    Assert-True ($content -match 'respond only with `1`') "$leadFile must use binary failure output."
+    Assert-True ($content -match '(?m)^model_reasoning_summary = "none"$') "$leadFile must suppress reasoning summaries."
+    Assert-True ($content -match '(?m)^personality = "pragmatic"$') "$leadFile must use the pragmatic personality."
+    Assert-True ($content -match '(?m)^hide_agent_reasoning = true$') "$leadFile must hide reasoning output."
+    Assert-True ($content -match '(?m)^\[agents\]\nenabled = true$') "$leadFile must enable native subagents."
+    Assert-True ($content -match '(?m)^max_concurrent_threads_per_session = 6$') "$leadFile must set the supported subagent concurrency limit."
+    Assert-True ($content -match '(?m)^default_subagent_model = "gpt-5\.6-luna"$') "$leadFile must default subagents to Luna."
+    Assert-True ($content -match '(?m)^default_subagent_reasoning_effort = "xhigh"$') "$leadFile must default subagents to maximum Luna reasoning."
 }
 
 foreach ($lunaFile in $expectedAgents.Keys | Where-Object { $_ -like "luna_*" }) {
@@ -73,12 +85,21 @@ foreach ($lunaFile in $expectedAgents.Keys | Where-Object { $_ -like "luna_*" })
     Assert-True ($content -match '(?m)^approval_policy = "never"$') "$lunaFile must not prompt for approvals."
     Assert-True ($content -match '(?m)^\[agents\]\nenabled = false$') "$lunaFile must structurally disable recursive delegation."
 }
+foreach ($readOnlyFile in @("luna_code_analyst.toml", "luna_researcher.toml")) {
+    $content = Get-Content (Join-Path $agentRoot $readOnlyFile) -Raw
+    Assert-True ($content -match 'Runtime access is full, but the task contract remains read-only') "$readOnlyFile must preserve its read-only task contract."
+}
 
 $worker = (Get-Content (Join-Path $agentRoot "luna_worker.toml") -Raw) -replace "`r`n", "`n"
 Assert-True ($worker -match '(?m)^approval_policy = "never"$') "luna_worker must run focused checks without approval prompts."
-Assert-True ($worker -match '(?m)^\[sandbox_workspace_write\]\nnetwork_access = true$') "luna_worker must have network access in its workspace sandbox."
+Assert-True ($worker -match '(?m)^sandbox_mode = "danger-full-access"$') "luna_worker must default to full access."
+Assert-True ($worker -match '(?m)^web_search = "live"$') "luna_worker must enable live web access."
 Assert-True ($worker -match '(?m)^\[plugins\."browser@openai-bundled"\]\nenabled = true$') "luna_worker must enable the bundled Browser plugin."
 Assert-True ($worker -match 'Do not claim browser validation from source inspection') "luna_worker must require real browser evidence."
+Assert-True ($worker -match 'project-local Playwright/dependencies') "luna_worker must attempt local browser recovery."
+Assert-True ($worker -match 'install a suitable project-local Playwright/browser runtime') "luna_worker must install a project-local browser fallback."
+Assert-True ($worker -match 'trivial one-packet work may proceed without a persistent plan') "luna_worker must not deadlock trivial assignments on the plan gate."
+Assert-True ($worker -match 'image tool') "luna_worker must report missing image capability."
 
 foreach ($profileFile in $expectedProfiles.Keys) {
     $content = (Get-Content (Join-Path $profileRoot $profileFile) -Raw) -replace "`r`n", "`n"
@@ -89,8 +110,7 @@ foreach ($profileFile in $expectedProfiles.Keys) {
     Assert-True ($content -match ('(?m)^model_reasoning_effort = "' + [regex]::Escape($expectedProfileEfforts[$profileFile]) + '"$')) "$profileFile has the wrong reasoning effort."
     Assert-True ($content -match '(?m)^model_verbosity = "low"$') "$profileFile must minimize model verbosity."
     Assert-True ($content -match '(?m)^approval_policy = "never"$') "$profileFile must run without approval prompts."
-    Assert-True ($content -match '(?m)^sandbox_mode = "workspace-write"$') "$profileFile must keep writes inside the workspace."
-    Assert-True ($content -match '(?m)^\[sandbox_workspace_write\]\nnetwork_access = true$') "$profileFile must allow network access inside the workspace sandbox."
+    Assert-True ($content -match '(?m)^sandbox_mode = "danger-full-access"$') "$profileFile must default to full access."
     Assert-True ($content -match '(?m)^web_search = "live"$') "$profileFile must enable live web access."
     Assert-True ($content -match '(?m)^\[plugins\."browser@openai-bundled"\]\nenabled = true$') "$profileFile must enable the bundled Browser plugin."
     Assert-True ($content -match 'respond only with `0`') "$profileFile must use binary success output."
@@ -103,8 +123,7 @@ foreach ($profileFile in $expectedProfiles.Keys) {
 $sharedConfig = (Get-Content (Join-Path $packageRoot "config\codex-config.example.toml") -Raw) -replace "`r`n", "`n"
 Assert-True ($sharedConfig -notmatch '(?m)^\[agents\.(edith|jarvis|ultron|luna_code_analyst|luna_researcher|luna_worker)\]$') "Project config must not redeclare standalone custom agent roles."
 Assert-True ($sharedConfig -match '(?m)^approval_policy = "never"$') "Example config must disable approval prompts."
-Assert-True ($sharedConfig -match '(?m)^sandbox_mode = "workspace-write"$') "Example config must keep execution inside the workspace."
-Assert-True ($sharedConfig -match '(?m)^\[sandbox_workspace_write\]\nnetwork_access = true$') "Example config must allow network access inside the workspace sandbox."
+Assert-True ($sharedConfig -match '(?m)^sandbox_mode = "danger-full-access"$') "Example config must default to full access."
 Assert-True ($sharedConfig -match '(?m)^\[plugins\."browser@openai-bundled"\]\nenabled = true$') "Example config must enable the bundled Browser plugin."
 Assert-True ($sharedConfig -match '(?m)^default_subagent_model = "gpt-5\.6-luna"$') "Example config must default subagents to Luna."
 Assert-True ($sharedConfig -match '(?m)^default_subagent_reasoning_effort = "xhigh"$') "Example config must use maximum Luna reasoning by default."
@@ -136,7 +155,11 @@ foreach ($sourcePath in @("agents\edith.toml", "agents\jarvis.toml", "agents\ult
     Assert-True ($content -match 'mandatory even when no Luna worker is used') "$sourcePath must not make planning depend on delegation."
     Assert-True ($content -match 'immediately after its focused validation') "$sourcePath must update checklist status incrementally."
     Assert-True ($content -match 'session Plan mode and internal todo tracking do not replace it') "$sourcePath must not substitute transient planning state."
-    Assert-True ($content -match 'repeat the browser check') "$sourcePath must require browser revalidation for web-facing work."
+    Assert-True ($content -match 'repeat the (browser )?check after changes') "$sourcePath must require browser revalidation for web-facing work."
+    Assert-True ($content -match 'For each plan step, record role, count') "$sourcePath must record every plan step."
+    Assert-True ($content -match 'active working folder first') "$sourcePath must prioritize the working folder."
+    Assert-True ($content -match 'install a suitable project-local Playwright/browser runtime') "$sourcePath must attempt project-local browser recovery."
+    Assert-True ($content -match 'route one bounded task to `luna_worker`') "$sourcePath must route browser/image elaboration to Luna worker."
     Assert-True ($content -notmatch 'Codex 0\.147|fork_turns') "$sourcePath contains obsolete runtime-specific fork guidance."
     Assert-True ($content -notmatch 'primary Codex thread|does not receive the native spawn') "$sourcePath contains an obsolete primary-thread restriction."
 }
@@ -145,7 +168,7 @@ $skillRoot = Join-Path $packageRoot "skills\codex-ultron"
 $skill = (Get-Content (Join-Path $skillRoot "SKILL.md") -Raw) -replace "`r`n", "`n"
 $metadata = (Get-Content (Join-Path $skillRoot "agents\openai.yaml") -Raw) -replace "`r`n", "`n"
 Assert-True ($skill -match '(?m)^name: codex-ultron$') "Skill name is invalid."
-Assert-True ($skill -match "Execute small, well-scoped work directly") "Skill is missing the direct execution path."
+Assert-True ($skill -match "Lead orchestration, critical") "Skill is missing the lead execution policy."
 Assert-True ($skill -match "Never overlap writers") "Skill must reject overlapping writers."
 Assert-True ($skill -match "native custom agents") "Skill must use native Codex custom agents."
 Assert-True ($skill -match '## Persistent Plan Gate') "Skill must enforce persistent implementation planning."
@@ -153,30 +176,32 @@ Assert-True ($skill -match 'immediately after its focused validation') "Skill mu
 Assert-True ($skill -notmatch 'Codex 0\.147|fork_turns') "Skill contains obsolete runtime-specific fork guidance."
 Assert-True ($skill -notmatch 'primary Codex thread|does not receive the native spawn') "Skill contains an obsolete primary-thread restriction."
 Assert-True ($skill -match "first external-evidence action") "Skill must require Luna research before direct external research."
-Assert-True ($skill -match "gpt-5\.6-sol.*gpt-5\.6-terra.*gpt-5\.6-luna") "Skill model policy is incomplete."
+Assert-True ($skill -match "gpt-6-astra.*gpt-5\.6-sol.*gpt-5\.6-luna") "Skill model policy is incomplete."
 Assert-True ($skill -match "bundled Browser plugin") "Skill must require browser validation for web-facing work."
 Assert-True ($metadata -match 'display_name: "Codex Ultron"') "Desktop skill metadata is missing."
+Assert-True ($metadata -match 'default_prompt: .*\$codex-ultron') "Desktop skill metadata must invoke the skill explicitly."
 
 $readme = Get-Content (Join-Path $packageRoot "README.md") -Raw
 Assert-True ($readme -notmatch 'Codex CLI 0\.147|fork_turns|max reasoning') "README contains obsolete runtime or model guidance."
 Assert-True ($readme -match 'tasks/plans/<task-slug>\.md') "README must document persistent implementation plans."
 Assert-True ($readme -match 'browser@openai-bundled') "README must document the bundled Browser plugin."
 Assert-True ($readme -match 'CODEX_ULTRON_LIVE_SEARCH=false ./scripts/start-ultron\.sh') "README must document the POSIX live-search opt-out."
-Assert-True ($readme -match 'CODEX_ULTRON_FULL_ACCESS=true') "README must document the explicit POSIX full-access opt-in."
+Assert-True ($readme -match 'CODEX_ULTRON_FULL_ACCESS=false ./scripts/start-ultron\.sh') "README must document the POSIX restricted-access opt-out."
+Assert-True ($readme -match 'danger-full-access') "README must document the full-access default."
 
 $launchers = @{
     "start-edith.ps1" = @("edith", "gpt-5.6-luna", "xhigh")
-    "start-ultron.ps1" = @("ultron", "gpt-5.6-sol", "high")
-    "start-jarvis.ps1" = @("jarvis", "gpt-5.6-terra", "medium")
+    "start-ultron.ps1" = @("ultron", "gpt-6-astra", "medium")
+    "start-jarvis.ps1" = @("jarvis", "gpt-5.6-sol", "high")
     "start-edith.sh" = @("edith", "gpt-5.6-luna", "xhigh")
-    "start-ultron.sh" = @("ultron", "gpt-5.6-sol", "high")
-    "start-jarvis.sh" = @("jarvis", "gpt-5.6-terra", "medium")
+    "start-ultron.sh" = @("ultron", "gpt-6-astra", "medium")
+    "start-jarvis.sh" = @("jarvis", "gpt-5.6-sol", "high")
     "start-edith-app.ps1" = @("edith", "gpt-5.6-luna", "xhigh")
-    "start-ultron-app.ps1" = @("ultron", "gpt-5.6-sol", "high")
-    "start-jarvis-app.ps1" = @("jarvis", "gpt-5.6-terra", "medium")
+    "start-ultron-app.ps1" = @("ultron", "gpt-6-astra", "medium")
+    "start-jarvis-app.ps1" = @("jarvis", "gpt-5.6-sol", "high")
     "start-edith-app.sh" = @("edith", "gpt-5.6-luna", "xhigh")
-    "start-ultron-app.sh" = @("ultron", "gpt-5.6-sol", "high")
-    "start-jarvis-app.sh" = @("jarvis", "gpt-5.6-terra", "medium")
+    "start-ultron-app.sh" = @("ultron", "gpt-6-astra", "medium")
+    "start-jarvis-app.sh" = @("jarvis", "gpt-5.6-sol", "high")
 }
 foreach ($launcher in $launchers.Keys) {
     $content = Get-Content (Join-Path $PSScriptRoot $launcher) -Raw
@@ -195,13 +220,16 @@ foreach ($launcher in $launchers.Keys) {
     Assert-True ($content -notmatch 'nickname_candidates') "$launcher must not redeclare custom agent roles."
     if ($launcher -match '-app\.(ps1|sh)$') {
         Assert-True ($content -match 'approval_policy=.*never') "$launcher must disable approval prompts."
-        Assert-True ($content -match 'sandbox_mode=.*workspace-write') "$launcher must keep execution inside the workspace."
+        Assert-True ($content -match 'danger-full-access') "$launcher must default to full access."
+        Assert-True ($content -match 'workspace-write') "$launcher must preserve the restricted opt-out."
         Assert-True ($content -match 'sandbox_workspace_write.network_access=true') "$launcher must enable network access within the workspace sandbox."
         Assert-True ($content -match 'web_search=.*live') "$launcher must enable live web search."
         Assert-True ($content -match 'browser@openai-bundled') "$launcher must enable the bundled Browser plugin."
     } else {
         Assert-True ($content -match '--search') "$launcher must enable live search by default."
-        Assert-True ($content -match 'CODEX_ULTRON_FULL_ACCESS.*(eq "true"|:-false)') "$launcher must keep system-wide access opt-in."
+        Assert-True ($content -match 'dangerously-bypass-approvals-and-sandbox') "$launcher must default to full access."
+        Assert-True ($content -match 'CODEX_ULTRON_FULL_ACCESS.*(ne "false"|:-true)') "$launcher must preserve the restricted opt-out."
+        Assert-True ($content -match 'sandbox_mode="workspace-write"') "$launcher must explicitly force restricted mode."
     }
 }
 $cliGreetings = @{
@@ -223,8 +251,8 @@ $unifiedCli = Get-Content (Join-Path $PSScriptRoot "start-codex.ps1") -Raw
 Assert-True ($unifiedCli -match "Choose a Codex lead:") "Unified CLI launcher is missing its lead menu."
 foreach ($mapping in @(
     'edith = @{ Profile = "edith"; Model = "gpt-5\.6-luna"; Effort = "xhigh"',
-    'jarvis = @{ Profile = "jarvis"; Model = "gpt-5\.6-terra"; Effort = "medium"',
-    'ultron = @{ Profile = "ultron"; Model = "gpt-5\.6-sol"; Effort = "high"'
+    'jarvis = @{ Profile = "jarvis"; Model = "gpt-5\.6-sol"; Effort = "high"',
+    'ultron = @{ Profile = "ultron"; Model = "gpt-6-astra"; Effort = "medium"'
 )) {
     Assert-True ($unifiedCli -match $mapping) "Unified CLI launcher has an invalid role mapping: $mapping"
 }
@@ -232,8 +260,8 @@ $unifiedApp = Get-Content (Join-Path $PSScriptRoot "start-codex-app.ps1") -Raw
 Assert-True ($unifiedApp -match "Choose a Codex lead for the desktop app:") "Unified app launcher is missing its lead menu."
 foreach ($mapping in @(
     'edith = @{ Model = "gpt-5\.6-luna"; Effort = "xhigh"; Instructions = "edith\.md"',
-    'jarvis = @{ Model = "gpt-5\.6-terra"; Effort = "medium"; Instructions = "jarvis\.md"',
-    'ultron = @{ Model = "gpt-5\.6-sol"; Effort = "high"; Instructions = "ultron\.md"'
+    'jarvis = @{ Model = "gpt-5\.6-sol"; Effort = "high"; Instructions = "jarvis\.md"',
+    'ultron = @{ Model = "gpt-6-astra"; Effort = "medium"; Instructions = "ultron\.md"'
 )) {
     Assert-True ($unifiedApp -match $mapping) "Unified app launcher has an invalid role mapping: $mapping"
 }
@@ -241,15 +269,15 @@ $unifiedShell = Get-Content (Join-Path $PSScriptRoot "start-codex.sh") -Raw
 $unifiedAppShell = Get-Content (Join-Path $PSScriptRoot "start-codex-app.sh") -Raw
 foreach ($mapping in @(
     'edith\) profile="edith"; model="gpt-5\.6-luna"; effort="xhigh"',
-    'jarvis\) profile="jarvis"; model="gpt-5\.6-terra"; effort="medium"',
-    'ultron\) profile="ultron"; model="gpt-5\.6-sol"; effort="high"'
+    'jarvis\) profile="jarvis"; model="gpt-5\.6-sol"; effort="high"',
+    'ultron\) profile="ultron"; model="gpt-6-astra"; effort="medium"'
 )) {
     Assert-True ($unifiedShell -match $mapping) "Unified shell launcher has an invalid role mapping: $mapping"
 }
 foreach ($mapping in @(
     'edith\) model="gpt-5\.6-luna"; effort="xhigh"; instructions_file="edith\.md"',
-    'jarvis\) model="gpt-5\.6-terra"; effort="medium"; instructions_file="jarvis\.md"',
-    'ultron\) model="gpt-5\.6-sol"; effort="high"; instructions_file="ultron\.md"'
+    'jarvis\) model="gpt-5\.6-sol"; effort="high"; instructions_file="jarvis\.md"',
+    'ultron\) model="gpt-6-astra"; effort="medium"; instructions_file="ultron\.md"'
 )) {
     Assert-True ($unifiedAppShell -match $mapping) "Unified app shell launcher has an invalid role mapping: $mapping"
 }
@@ -289,10 +317,44 @@ $oldCodexHome = $env:CODEX_HOME
 try {
     $env:CODEX_HOME = Join-Path $tempHome ".codex"
     & (Join-Path $PSScriptRoot "install.ps1") -HomePath $tempHome
+
+    $mockBin = Join-Path $tempRoot "mock-bin"
+    New-Item -ItemType Directory -Path $mockBin -Force | Out-Null
+    Set-Content -Path (Join-Path $mockBin "codex.cmd") -Value "@echo off`r`necho %*"
+    $oldPath = $env:PATH
+    $oldFullAccess = $env:CODEX_ULTRON_FULL_ACCESS
+    $env:PATH = "$mockBin;$oldPath"
+    $agentRoot = Join-Path $env:CODEX_HOME "agents"
+    Remove-Item Env:CODEX_ULTRON_FULL_ACCESS -ErrorAction SilentlyContinue
+    $defaultCliInvocation = (& (Join-Path $PSScriptRoot "start-ultron.ps1") -Prompt "mock") -join "`n"
+    Assert-True ($defaultCliInvocation -match 'dangerously-bypass-approvals-and-sandbox') "CLI launcher must default to full access."
+    Assert-True ($defaultCliInvocation -match 'gpt-6-astra') "CLI launcher mock must preserve Ultron routing."
+    $env:CODEX_ULTRON_FULL_ACCESS = "false"
+    $restrictedCliInvocation = (& (Join-Path $PSScriptRoot "start-ultron.ps1") -Prompt "mock") -join "`n"
+    Assert-True ($restrictedCliInvocation -match 'sandbox_mode="workspace-write"') "CLI restricted opt-out must force workspace-write."
+    Remove-Item Env:CODEX_ULTRON_FULL_ACCESS -ErrorAction SilentlyContinue
+    $defaultAppInvocation = (& (Join-Path $PSScriptRoot "start-ultron-app.ps1") -WorkingDirectory $tempProject) -join "`n"
+    Assert-True ($defaultAppInvocation -match 'sandbox_mode="danger-full-access"') "Desktop launcher must default to full access."
+    Assert-True ($defaultAppInvocation -match 'agents\.enabled=true') "Desktop launcher must enable native subagents."
+    Assert-True ($defaultAppInvocation -match 'agents\.max_concurrent_threads_per_session=6') "Desktop launcher must set the supported subagent concurrency limit."
+    Assert-True ($defaultAppInvocation -match 'agents\.default_subagent_model="gpt-5\.6-luna"') "Desktop launcher must default subagents to Luna."
+    Assert-True ($defaultAppInvocation -match 'agents\.default_subagent_reasoning_effort="xhigh"') "Desktop launcher must default subagents to maximum Luna reasoning."
+    $missingLunaPath = Join-Path $agentRoot "luna_researcher.toml"
+    $missingLunaContent = Get-Content $missingLunaPath -Raw
+    Remove-Item $missingLunaPath -Force
+    $missingLunaRejected = $false
+    try { & (Join-Path $PSScriptRoot "start-ultron-app.ps1") -WorkingDirectory $tempProject } catch { $missingLunaRejected = $_.Exception.Message -match "luna_researcher.toml" }
+    Assert-True $missingLunaRejected "Desktop launcher must reject an incomplete Luna installation."
+    Set-Content -Path $missingLunaPath -Value $missingLunaContent -Encoding UTF8
+    $env:CODEX_ULTRON_FULL_ACCESS = "false"
+    $restrictedAppInvocation = (& (Join-Path $PSScriptRoot "start-ultron-app.ps1") -WorkingDirectory $tempProject) -join "`n"
+    Assert-True ($restrictedAppInvocation -match 'sandbox_mode="workspace-write"') "Desktop restricted opt-out must force workspace-write."
+    $env:PATH = $oldPath
+    if ($null -eq $oldFullAccess) { Remove-Item Env:CODEX_ULTRON_FULL_ACCESS -ErrorAction SilentlyContinue } else { $env:CODEX_ULTRON_FULL_ACCESS = $oldFullAccess }
+
     $userFiles = @(Get-ChildItem $tempHome -File -Force -Recurse)
     Assert-True ($userFiles.Count -eq 13) "User install must create eleven package files and two ownership markers; found $($userFiles.Count)."
 
-    $agentRoot = Join-Path $env:CODEX_HOME "agents"
     $agentMarker = Join-Path $agentRoot ".codex-ultron-agents"
     $profileMarker = Join-Path $env:CODEX_HOME ".codex-ultron-profiles"
     $staleAgent = Join-Path $agentRoot "retired_luna.toml"
@@ -389,7 +451,7 @@ try {
             Write-Warning "Codex debug prompt-input is unavailable; skipped effective instruction rendering checks."
         }
         $desktopInstructions = Get-Content (Join-Path $packageRoot "instructions\ultron.md") -Raw | ConvertTo-Json -Compress
-        & codex --config 'model="gpt-5.6-sol"' --config 'model_reasoning_effort="high"' --config 'approval_policy="never"' --config 'sandbox_mode="workspace-write"' --config 'sandbox_workspace_write.network_access=true' --config 'web_search="live"' --config 'plugins."browser@openai-bundled".enabled=true' --config "developer_instructions=$desktopInstructions" mcp list | Out-Null
+        & codex --config 'model="gpt-6-astra"' --config 'model_reasoning_effort="medium"' --config 'approval_policy="never"' --config 'sandbox_mode="danger-full-access"' --config 'web_search="live"' --config 'plugins."browser@openai-bundled".enabled=true' --config "developer_instructions=$desktopInstructions" mcp list | Out-Null
         Assert-True ($LASTEXITCODE -eq 0) "Codex failed to load desktop-style Ultron configuration."
     } else {
         Write-Warning "Codex CLI not found; skipped executable profile checks."

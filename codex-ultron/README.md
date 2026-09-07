@@ -4,22 +4,22 @@ Portable Ultron, Jarvis, Edith, and Luna setup for Codex CLI and the Codex surfa
 
 ## Model Routing
 
-- Ultron: `gpt-5.6-sol`, high reasoning
-- Jarvis: `gpt-5.6-terra`, medium reasoning
+- Ultron: `gpt-6-astra`, medium reasoning
+- Jarvis: `gpt-5.6-sol`, high reasoning
 - Edith: `gpt-5.6-luna`, maximum (`xhigh`) reasoning
 - Every Luna subagent: `gpt-5.6-luna`, maximum (`xhigh`) reasoning
 
 The CLI and desktop launchers select the requested lead profile and model automatically. Custom Luna agent files select their own model automatically when spawned. Generic Codex chats do not permit a skill to replace the model of an already-running thread, so use the matching launcher when deterministic lead routing matters.
 
-Small and well-scoped work stays in the lead. Luna is used only for bounded analysis, research, or implementation when isolation or independent parallelism materially reduces lead cost or context. Low model verbosity and role-specific effort avoid spending deep-reasoning tokens on repeatable work. Leads own architecture, shared files, integration, validation, and user communication.
+Leads own orchestration, critical decisions, integration acceptance, and user communication. Routine implementation is delegated to bounded Luna assignments when useful, including one serialized shared-file integration step. Each delegated plan step records role, count (usually one), owned scope/files, dependencies, focused check, and escalation; only independent steps run in parallel and Luna roles never recurse. Low model verbosity and role-specific effort avoid spending deep-reasoning tokens on repeatable work.
 
 For requests that explicitly ask for internet or web research, external references, current documentation, library comparisons, or proven patterns, Ultron makes a fresh `luna_researcher` child its first external-evidence action. The lead waits for that bounded evidence packet before planning and only researches directly afterward to fill a specific gap. Profiles and launchers enable live web search by default.
 
 Codex loads the three Luna specialties as first-class custom agents from `~/.codex/agents` or a trusted project's `.codex/agents`. Leads select the exact underscore role name through the native subagent workflow. Each standalone Luna TOML owns its model, reasoning effort, sandbox, and instructions; omitted plugin and tool integrations inherit from the parent. Assignments name only the required plan and files instead of copying full parent history. Luna work remains bounded and non-orchestrating.
 
-Before the first implementation edit for non-trivial work, every lead entry path creates `tasks/plans/<task-slug>.md`. The file records Current Architecture, Intended Design, Preserved Interfaces, checkbox Milestones, and Validation. One milestone is marked in progress and checked immediately after focused validation before the next begins. Session Plan mode and internal todo state do not replace this repository artifact, and `luna_worker` rejects assignments without a ready plan milestone.
+Before the first implementation edit for non-trivial work, every lead entry path creates `tasks/plans/<task-slug>.md`. The file records Current Architecture, Intended Design, Preserved Interfaces, checkbox Milestones, and Validation. One milestone is marked in progress and checked immediately after focused validation before the next begins. Session Plan mode and internal todo state do not replace this repository artifact; `luna_worker` requires a ready plan milestone for non-trivial assignments while allowing trivial one-packet work to proceed.
 
-Profiles, lead agents, project config, and desktop launchers enable `browser@openai-bundled`, live search, and approval-free execution inside the active workspace. They use Codex `workspace-write` with network access enabled; writes outside the workspace remain sandboxed instead of receiving system-wide access. `luna_worker` follows the same boundary. For web-facing work, agents must exercise the rendered flow and inspect page, console, network, and screenshot evidence before claiming success.
+Profiles, lead agents, project config, and desktop launchers enable `browser@openai-bundled`, live search, and approval-free execution with `danger-full-access` by default. Agents use the active working folder first and broaden writes only when necessary under host policy. Set `CODEX_ULTRON_FULL_ACCESS=false` for an explicit `workspace-write` opt-out; launchers pass that restricted mode explicitly. For web-facing work, agents check native browser availability, reuse existing project-local Playwright/dependencies, install a suitable project-local Playwright/browser runtime when needed, launch and retest, then exercise the rendered flow and inspect page, console, network, and screenshot evidence before claiming success. Image work uses available image tools; missing hosted capability is reported and escalated without global installation.
 
 ## Install
 
@@ -43,7 +43,7 @@ The user installer writes:
 
 These locations are shared by Codex CLI and the desktop app. Repeat runs replace only files recorded in `.codex-ultron-agents` and `.codex-ultron-profiles`, remove stale managed files, and preserve unrelated customizations. An unmanaged same-name collision is rejected; use `-Force` or `--force` only when intentionally taking ownership of it. Restart Codex after installation if the skill or agents do not appear immediately.
 
-The installed lead profiles intentionally use `approval_policy = "never"`, `sandbox_mode = "workspace-write"`, and `[sandbox_workspace_write].network_access = true`. They can work autonomously in the active workspace and use the web, while writes outside the workspace are blocked. The CLI launchers retain an explicit `-FullAccess`/`CODEX_ULTRON_FULL_ACCESS=true` escape hatch for exceptional trusted tasks; it is off by default.
+The installed lead profiles intentionally use `approval_policy = "never"`, `sandbox_mode = "danger-full-access"`, and live web plus Browser plugin access. They can work autonomously while starting with the active working folder. The CLI and desktop launchers default to full access; set `CODEX_ULTRON_FULL_ACCESS=false` to force `sandbox_mode = "workspace-write"` for a restricted session.
 
 Project-scoped installation is available for repositories that should share agents and the skill:
 
@@ -87,11 +87,13 @@ chmod +x scripts/*.sh
 The launchers reject profile, model, provider, reasoning, and arbitrary config overrides. Direct equivalents are:
 
 ```sh
-codex --profile ultron --model gpt-5.6-sol
-codex --profile jarvis --model gpt-5.6-terra
+codex --profile ultron --model gpt-6-astra
+codex --profile jarvis --model gpt-5.6-sol
 ```
 
-CLI launchers enable live search and workspace-scoped autonomous execution by default. Disable either default for a session, or opt into system-wide access only when explicitly required:
+Codex CLI has no native `--agent` primary-session switch. Launcher `-Agent`/`--agent` selects one of these profiles; standalone agent TOMLs apply when Codex selects a custom agent through its native subagent workflow. Mentioning `$codex-ultron` cannot replace the model of an already-running thread, and model, plugin, browser, and network availability still depend on the installed Codex runtime and host policy.
+
+CLI launchers enable live search and full access by default. Disable search or opt into an explicit restricted workspace session with:
 
 ```powershell
 .\scripts\start-ultron.ps1 -Search:$false
@@ -99,6 +101,10 @@ CLI launchers enable live search and workspace-scoped autonomous execution by de
 
 ```sh
 CODEX_ULTRON_LIVE_SEARCH=false ./scripts/start-ultron.sh
+```
+
+```sh
+CODEX_ULTRON_FULL_ACCESS=false ./scripts/start-ultron.sh
 ```
 
 Each CLI launcher prints the selected lead's exact startup greeting before invoking Codex. This handshake is emitted by the launcher rather than left to model response timing, so it remains visible even when the first model response is only the configured completion status.
@@ -129,7 +135,7 @@ Linux or macOS:
 ./scripts/start-edith-app.sh /path/to/repo
 ```
 
-The launcher passes the selected model, role-specific reasoning, low verbosity, live search, workspace-scoped execution, Browser plugin enablement, and matching lead instructions while opening the desktop workspace. Codex accepts `--profile` for runtime CLI commands but not `codex app`, so desktop launchers inject the equivalent settings explicitly. In the desktop skill picker, `Codex Ultron` provides the same orchestration workflow. Agent activity appears as inspectable subagent threads.
+The launcher passes the selected model, role-specific reasoning, low verbosity, live search, full-access (or explicit restricted) execution, Browser plugin enablement, and matching lead instructions while opening the desktop workspace. Codex accepts `--profile` for runtime CLI commands but not `codex app`, so desktop launchers inject the equivalent settings explicitly. In the desktop skill picker, `Codex Ultron` provides the same orchestration workflow. Agent activity appears as inspectable subagent threads.
 
 ## Package Layout
 

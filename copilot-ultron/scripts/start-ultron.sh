@@ -6,24 +6,20 @@ package_root=$(CDPATH= cd -- "$script_dir/.." && pwd)
 
 for argument in "$@"; do
     case "$argument" in
-        --agent|--agent=*|--plugin-dir|--plugin-dir=*|--model|--model=*|--context|--context=*|--reasoning-effort|--reasoning-effort=*|--effort|--effort=*)
-            printf '%s\n' "Agent, plugin, model, reasoning effort, and context are fixed by this launcher." >&2
+        --agent|--agent=*|--plugin-dir|--plugin-dir=*|--model|--model=*|--reasoning-effort|--reasoning-effort=*|--effort|--effort=*)
+            printf '%s\n' "Agent, plugin, model, and reasoning effort are fixed by this launcher." >&2
             exit 2
             ;;
     esac
 done
 
 permission_flags="--allow-all-tools --allow-all-urls --disallow-temp-dir"
-sandbox_flag=--sandbox
-[ "${COPILOT_SANDBOX:-true}" = "false" ] && sandbox_flag=
-[ "${COPILOT_ALLOW_ALL:-false}" = "true" ] && permission_flags=--allow-all && sandbox_flag=--no-sandbox
+[ "${COPILOT_ALLOW_ALL:-true}" = "true" ] && permission_flags=--allow-all
 
 exec copilot \
     --plugin-dir "$package_root" \
     --agent ultron-orchestrator:ultron \
-    --model gpt-5.6-sol \
-    --reasoning-effort high \
-    --context default \
-    $sandbox_flag \
+    --model gpt-6-astra \
+    --reasoning-effort medium \
     $permission_flags \
     "$@"

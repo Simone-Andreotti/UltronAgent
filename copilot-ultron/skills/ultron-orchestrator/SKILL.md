@@ -20,12 +20,12 @@ Use the installed custom agents in `../../agents/` to reproduce the Codex orches
 
 ## Workflow
 
-1. Execute small, well-scoped work directly in the lead. Do not create a plan or subagent call when a targeted local check can resolve it.
-2. For complex work, delegate to `luna-code-analyst` only when isolated analysis avoids substantial parent-context growth or parallelizes a material track.
-3. Delegate to `luna-researcher` only when unresolved external evidence affects a decision. Prefer one bounded question and primary sources.
-4. Before the first implementation edit for non-trivial work, create `tasks/plans/<task-slug>.md` with Current Architecture, Intended Design, Preserved Interfaces, checkbox Milestones, and Validation. Multi-file implementation, public-contract, dependency, configuration, permission, architecture, security-sensitive, or multi-stage validation work is non-trivial. Mark one item `(in progress)` and mark it `[x]` immediately after focused validation before activating the next; todo does not replace this file.
-5. Keep architectural, ambiguous, shared-file, security-sensitive, and integration-critical changes with the lead.
-6. Delegate only fully specified, narrow, non-overlapping milestones when isolation or parallelism is cheaper than direct lead execution. Invoke multiple subagents in one parallel batch when their tasks are independent; never parallelize dependencies or overlapping writers.
+1. Keep orchestration, critical or difficult decisions, and final acceptance with the selected lead. Delegate routine implementation and serialized integration to existing Luna roles; the lead accepts the integrated result.
+2. Use `luna-code-analyst` only for a bounded read-only code map, and `luna-researcher` only for unresolved external evidence. Use `luna-worker` for routine implementation, focused checks, browser tests, screenshots, and image elaboration.
+3. Use the fewest workers needed, normally one. Each plan milestone names exactly one Luna role, count, owned scope, dependencies, executable check, and escalation condition; a lead-owned critical milestone records count 0 and its rationale. Use multiple subagents in one parallel batch only for independent, non-overlapping milestones; never parallelize dependent work or overlapping writers, and never recurse.
+4. Before the first implementation edit for non-trivial work, create `tasks/plans/<task-slug>.md` with Current Architecture, Intended Design, Preserved Interfaces, checkbox Milestones, and Validation. Multi-file implementation, public-contract, dependency, configuration, permission, architecture, security-sensitive, or multi-stage validation work is non-trivial. Mark one item `(in progress)` and mark it `[x]` immediately after focused validation before activating the next; todo does not replace this file. For non-trivial worker work, the lead verifies the plan and passes one ready milestone; a trivial bounded worker assignment may use its complete packet without a plan.
+5. For browser work, check native browser tooling first; if it is absent or broken, use existing project-local Playwright dependencies, then repair or install the packaged pinned fallback and its required browser runtime and repeat the browser check. Use a host-supplied image capability or existing project-local tooling for image elaboration; never invent a hosted tool. Prefer project-local tool installation; install outside the working folder only when necessary and permitted by host policy. Report the exact blocker only after feasible recovery.
+6. Prefer writes in the active working folder; write elsewhere only when necessary for the assigned task. Agent files inherit the host's available tools, but host, organization, and session policy controls actual permissions, models, effort, and browser availability. Do not claim full-system access in VS Code when host policy restricts it. Luna roles must not invoke agent, task, handoff, or delegation tools even when the host exposes them.
 7. Validate with the narrowest executable check that can falsify the change. The lead owns final acceptance.
 
 ## No Progress Narration
@@ -65,7 +65,7 @@ Subagents never orchestrate, spawn agents, coordinate with each other, or commun
 
 ## Model Policy
 
-Use `gpt-5.6-sol` with high reasoning for Ultron, `gpt-5.6-terra` with medium reasoning for Jarvis, and `gpt-5.6-luna` with low reasoning for Edith. Keep every Luna role on `gpt-5.6-luna` and default context; use high reasoning for code analysis and medium reasoning for research and implementation. Never select Copilot Auto, another model, or long context.
+Agent frontmatter requests `gpt-6-astra` with medium reasoning for Ultron, `gpt-5.6-sol` with high reasoning for Jarvis, and `gpt-5.6-luna` with maximum (`xhigh`) reasoning for Edith. Keep every Luna role on `gpt-5.6-luna` and default context; use high reasoning for code analysis and medium reasoning for research and implementation. Never select Copilot Auto, another model, or long context. VS Code or CLI may substitute the active session model or effort when policy or account availability prevents the requested value.
 
 ## Resources
 

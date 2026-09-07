@@ -3,7 +3,7 @@ param(
     [string]$Prompt,
     [string]$WorkingDirectory = (Get-Location).Path,
     [switch]$Search = ($env:CODEX_ULTRON_LIVE_SEARCH -ne "false"),
-    [switch]$FullAccess = ($env:CODEX_ULTRON_FULL_ACCESS -eq "true")
+    [switch]$FullAccess = ($env:CODEX_ULTRON_FULL_ACCESS -ne "false")
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,12 +18,16 @@ if (-not (Test-Path (Join-Path $codexHome "ultron.config.toml"))) {
 
 $arguments = @(
     "--profile", "ultron",
-    "--model", "gpt-5.6-sol",
-    "--config", 'model_reasoning_effort="high"',
+    "--model", "gpt-6-astra",
+    "--config", 'model_reasoning_effort="medium"',
     "--cd", $WorkingDirectory
 )
 if ($Search) { $arguments += "--search" }
-if ($FullAccess) { $arguments += "--dangerously-bypass-approvals-and-sandbox" }
+if ($FullAccess) {
+    $arguments += "--dangerously-bypass-approvals-and-sandbox"
+} else {
+    $arguments += "--config", 'sandbox_mode="workspace-write"', "--config", 'sandbox_workspace_write.network_access=true'
+}
 if ($Prompt) { $arguments += $Prompt }
 
 Write-Output "Lowly human, let Ultron manage the rest."
