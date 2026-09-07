@@ -90,6 +90,12 @@ foreach ($readOnlyFile in @("luna_code_analyst.toml", "luna_researcher.toml")) {
     Assert-True ($content -match 'Runtime access is full, but the task contract remains read-only') "$readOnlyFile must preserve its read-only task contract."
 }
 
+$analystBoundary = 'Start with task-named files or symbols; if none are named, use only targeted searches to locate them. Never inventory directories or read unrelated files. Stop once evidence answers the assigned question.'
+$analystOutputBoundary = 'Return one compact packet of at most 500 words, except when a blocker needs more detail'
+$analyst = Get-Content (Join-Path $agentRoot "luna_code_analyst.toml") -Raw
+Assert-True ($analyst -match [regex]::Escape($analystBoundary)) "luna_code_analyst must preserve its task-first evidence boundary."
+Assert-True ($analyst -match [regex]::Escape($analystOutputBoundary)) "luna_code_analyst must preserve its compact output boundary."
+
 $worker = (Get-Content (Join-Path $agentRoot "luna_worker.toml") -Raw) -replace "`r`n", "`n"
 Assert-True ($worker -match '(?m)^approval_policy = "never"$') "luna_worker must run focused checks without approval prompts."
 Assert-True ($worker -match '(?m)^sandbox_mode = "danger-full-access"$') "luna_worker must default to full access."
@@ -140,7 +146,7 @@ foreach ($leadName in $leadContracts.Keys) {
     }
 }
 
-$codePreflight = 'Before planning or implementation for non-trivial, ambiguous, multi-file, or architectural work, first spawn exactly one bounded read-only `luna_code_analyst` task to map the current workspace; simple local fixes may stay direct.'
+$codePreflight = 'Before planning or implementation for non-trivial, ambiguous, multi-file, or architectural work, first spawn exactly one bounded read-only `luna_code_analyst` task to inspect only files and symbols needed for the assigned task or question; simple local fixes may stay direct.'
 $researchPreflight = 'When the user explicitly requests external/current web research, the first external-evidence action must be exactly one bounded `luna_researcher` spawn, before lead web research.'
 foreach ($leadName in @("edith", "jarvis", "ultron")) {
     foreach ($sourcePath in @("agents\$leadName.toml", "profiles\$leadName.config.toml", "instructions\$leadName.md")) {

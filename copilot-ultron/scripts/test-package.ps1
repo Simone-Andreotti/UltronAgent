@@ -118,7 +118,7 @@ foreach ($agentFile in $agentFiles) {
 Assert-True ((($agentNames | Sort-Object) -join "`n") -eq ($expectedAgents -join "`n")) "Agent names do not match the expected package roles."
 Assert-True (($agentNames | Select-Object -Unique).Count -eq $agentNames.Count) "Agent names must be unique."
 
-$codePreflight = 'Before planning or implementation for non-trivial, ambiguous, multi-file, or architectural work, first spawn exactly one bounded read-only `luna-code-analyst` task to map the current workspace; simple local fixes may stay direct.'
+$codePreflight = 'Before planning or implementation for non-trivial, ambiguous, multi-file, or architectural work, first spawn exactly one bounded read-only `luna-code-analyst` task to inspect only files and symbols needed for the assigned task or question; simple local fixes may stay direct.'
 $researchPreflight = 'When the user explicitly requests external/current web research, the first external-evidence action must be exactly one bounded `luna-researcher` spawn, before lead web research.'
 foreach ($leadName in @("ultron", "jarvis", "edith")) {
     $content = Get-Content (Join-Path $agentRoot "$leadName.agent.md") -Raw
@@ -152,6 +152,12 @@ foreach ($leadName in @("ultron", "jarvis", "edith")) {
     Assert-True ($content -match 'When `/explain` is invoked') "$leadName must support explain mode."
     Assert-True ($content -match "private chain-of-thought") "$leadName explain mode must protect private reasoning."
 }
+
+$analystBoundary = 'Start with task-named files or symbols; if none are named, use only targeted searches to locate them. Never inventory directories or read unrelated files. Stop once evidence answers the assigned question.'
+$analystOutputBoundary = 'Return a compact evidence packet of at most 500 words, except when a blocker needs more detail'
+$analyst = Get-Content (Join-Path $agentRoot "luna-code-analyst.agent.md") -Raw
+Assert-True ($analyst -match [regex]::Escape($analystBoundary)) "luna-code-analyst must preserve its task-first evidence boundary."
+Assert-True ($analyst -match [regex]::Escape($analystOutputBoundary)) "luna-code-analyst must preserve its compact output boundary."
 
 $leadGreetings = @{
     "ultron" = "Lowly human, let Ultron manage the rest."
