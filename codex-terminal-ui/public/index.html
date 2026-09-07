@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>Codex Terminal</title>
+    <link rel="stylesheet" href="/vendor/xterm.css">
+    <link rel="stylesheet" href="/app.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <main class="app-grid">
+        <aside class="rail left-rail" aria-label="Lead and session history">
+          <section class="rail-section agents-section" aria-labelledby="agents-heading">
+            <div class="section-kicker" id="agents-heading">LEAD PROFILES</div>
+            <div class="agent-list" id="agent-list" role="listbox" aria-label="Choose a lead profile">
+              <button class="agent-card" type="button" role="option" data-agent="edith" aria-selected="false">
+                <span class="agent-orbit orbit-edith" aria-hidden="true"><span></span></span>
+                <span class="agent-copy"><strong>Edith</strong><small>focused / precise</small></span>
+                <span class="agent-state">READY</span>
+              </button>
+              <button class="agent-card" type="button" role="option" data-agent="jarvis" aria-selected="false">
+                <span class="agent-orbit orbit-jarvis" aria-hidden="true"><span></span></span>
+                <span class="agent-copy"><strong>Jarvis</strong><small>balanced / adaptive</small></span>
+                <span class="agent-state">READY</span>
+              </button>
+              <button class="agent-card agent-card-ultron" type="button" role="option" data-agent="ultron" aria-selected="false" aria-describedby="ultron-hint">
+                <span class="chain-lock" aria-hidden="true"><span class="chain-link link-one"></span><span class="chain-link link-two"></span></span>
+                <span class="agent-copy"><strong>Ultron</strong><small id="ultron-hint">double activate to unlock</small></span>
+                <span class="agent-state" id="ultron-state">LOCKED</span>
+              </button>
+            </div>
+            <p class="activation-note" id="activation-note" aria-live="polite">Choose a profile to open a terminal.</p>
+          </section>
+
+          <section class="rail-section history-section" aria-labelledby="history-heading">
+            <div class="section-kicker section-kicker-row">
+              <span id="history-heading">RECENT SESSIONS</span>
+              <button class="icon-button" id="history-refresh" type="button" aria-label="Refresh recent sessions" title="Refresh sessions">↻</button>
+            </div>
+            <div class="history-list" id="history-list" aria-live="polite">
+              <p class="empty-state">Scanning local sessions…</p>
+            </div>
+          </section>
+        </aside>
+
+        <section class="terminal-column" aria-label="Codex terminal workspace">
+          <div class="terminal-toolbar">
+            <div class="terminal-title">
+              <span class="pulse-icon" aria-hidden="true"></span>
+              <div><span class="section-kicker">LIVE SHELL</span><strong id="terminal-agent">NO PROFILE SELECTED</strong></div>
+            </div>
+            <div class="terminal-context" aria-label="Loopback connection and workspace">
+              <span class="connection-dot" id="connection-dot" aria-hidden="true"></span>
+              <span id="connection-label">OFFLINE</span>
+              <span class="meta-separator" aria-hidden="true">/</span>
+              <button class="workspace-control" id="workspace-control" type="button" aria-haspopup="dialog" aria-controls="workspace-dialog" title="Choose workspace">
+                <span class="workspace-label" id="workspace-label">NO WORKSPACE</span><span class="workspace-chevron" aria-hidden="true">⌄</span>
+              </button>
+            </div>
+            <div class="terminal-actions">
+              <span class="running-badge" id="running-badge">STANDBY</span>
+              <button class="text-button" id="fit-terminal" type="button">FIT</button>
+            </div>
+          </div>
+          <div class="terminal-frame">
+            <div class="terminal-scanline" aria-hidden="true"></div>
+            <div id="terminal" aria-label="Interactive Codex terminal"></div>
+            <div class="terminal-empty" id="terminal-empty">
+              <span class="empty-glyph" aria-hidden="true">⌁</span>
+              <strong>Terminal ready</strong>
+              <span>Activate a lead profile to begin.</span>
+            </div>
+          </div>
+          <footer class="terminal-footer">
+            <span><kbd>CTRL</kbd><span>+</span><kbd>L</kbd> clear viewport</span>
+            <span id="terminal-size">120 × 36</span>
+            <span class="footer-grow"></span>
+            <span id="terminal-message" aria-live="polite">Awaiting profile</span>
+          </footer>
+        </section>
+
+        <aside class="rail right-rail" aria-label="Runtime telemetry">
+          <section class="rail-section usage-section" aria-labelledby="usage-heading">
+            <div class="section-kicker section-kicker-row">
+              <span id="usage-heading">USAGE / LIMITS</span>
+              <span class="live-tag"><i></i> LIVE</span>
+            </div>
+            <div class="usage-card" id="primary-usage">
+              <div class="usage-card-head"><span>PRIMARY WINDOW</span><strong id="primary-available">—</strong></div>
+              <div class="usage-bar"><span id="primary-bar"></span></div>
+              <div class="usage-card-foot"><span>available</span><span id="primary-reset">reset —</span></div>
+            </div>
+            <div class="usage-card secondary-usage" id="secondary-usage">
+              <div class="usage-card-head"><span>SECONDARY WINDOW</span><strong id="secondary-available">—</strong></div>
+              <div class="usage-bar"><span id="secondary-bar"></span></div>
+              <div class="usage-card-foot"><span>available</span><span id="secondary-reset">reset —</span></div>
+            </div>
+            <div class="reset-counter">
+              <span><strong id="resets-available">—</strong><small>resets available</small></span>
+              <small>use via <code>/usage</code></small>
+            </div>
+            <small class="reset-expiry" id="resets-expiry" hidden></small>
+            <div class="usage-meta"><span id="plan-label">PLAN —</span><span id="usage-updated">NOT SYNCED</span></div>
+          </section>
+
+          <section class="rail-section subagents-section" aria-labelledby="subagents-heading">
+            <div class="section-kicker section-kicker-row">
+              <span id="subagents-heading">SUBAGENTS</span>
+              <span class="count-badge" id="subagent-count">0</span>
+            </div>
+            <div class="subagent-list" id="subagent-list" aria-live="polite">
+              <p class="empty-state">No live subagents.</p>
+            </div>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <dialog class="workspace-dialog" id="workspace-dialog" aria-labelledby="workspace-dialog-title">
+      <div class="dialog-head">
+        <div><span class="section-kicker">TERMINAL WORKSPACE</span><h2 id="workspace-dialog-title">Choose a folder</h2></div>
+        <button class="icon-button dialog-close" id="workspace-dialog-close" type="button" aria-label="Close workspace chooser">×</button>
+      </div>
+      <div class="workspace-picker-body">
+        <div class="workspace-path-row">
+          <label class="section-kicker" for="workspace-path">ABSOLUTE PATH</label>
+          <div class="workspace-path-controls">
+            <input id="workspace-path" type="text" autocomplete="off" spellcheck="false" placeholder="Paste an absolute folder path">
+            <button class="text-button" id="workspace-browse" type="button">BROWSE</button>
+          </div>
+        </div>
+        <div class="workspace-browser-head">
+          <span class="workspace-browser-path" id="workspace-browser-path">Choose a root or paste a path</span>
+          <div class="workspace-browser-actions">
+            <button class="text-button" id="workspace-favorite-toggle" type="button" disabled aria-pressed="false">☆ FAVORITE</button>
+            <button class="text-button" id="workspace-parent" type="button" disabled>UP</button>
+          </div>
+        </div>
+        <div class="workspace-browser-grid">
+          <section class="workspace-browser-section" aria-labelledby="workspace-roots-heading">
+            <div class="section-kicker" id="workspace-roots-heading">ROOTS</div>
+            <div class="workspace-option-list" id="workspace-roots"></div>
+          </section>
+          <section class="workspace-browser-section" aria-labelledby="workspace-directories-heading">
+            <div class="section-kicker" id="workspace-directories-heading">FOLDERS</div>
+            <div class="workspace-option-list" id="workspace-directories"></div>
+          </section>
+        </div>
+        <section class="workspace-favorites-section" aria-labelledby="workspace-favorites-heading">
+          <div class="section-kicker" id="workspace-favorites-heading">FAVORITES</div>
+          <div class="workspace-favorites" id="workspace-favorites"></div>
+        </section>
+        <div class="workspace-dialog-footer">
+          <p class="workspace-picker-status" id="workspace-picker-status" role="status" aria-live="polite">Choose a folder to continue.</p>
+          <button class="text-button workspace-select" id="workspace-select" type="button" disabled>USE FOLDER</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="subagent-dialog" id="subagent-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-head">
+        <div><span class="section-kicker">LIVE LOG</span><h2 id="dialog-title">Subagent</h2></div>
+        <button class="icon-button dialog-close" id="dialog-close" type="button" aria-label="Close subagent log">×</button>
+      </div>
+      <div class="dialog-meta" id="dialog-meta"></div>
+      <pre class="dialog-log" id="dialog-log" tabindex="0">No log output yet.</pre>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="/vendor/xterm.js"></script>
+    <script src="/vendor/xterm-fit.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>
