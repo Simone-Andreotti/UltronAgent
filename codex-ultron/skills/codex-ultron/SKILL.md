@@ -16,8 +16,8 @@ description: Run the Ultron, Jarvis, or Edith orchestration workflow with bounde
 ## Execute Efficiently
 
 1. Lead orchestration, critical architecture/security/ambiguity decisions, and final acceptance. Delegate routine implementation, including one serialized shared-file integration step when fully specified.
-2. Use `luna_code_analyst` only when one bounded analysis avoids material parent-context growth or parallelizes independent read work.
-3. When the user explicitly asks for internet or web research, external references, current documentation, library comparisons, or proven patterns, make `luna_researcher` the first external-evidence action. Give it one bounded evidence question and any user-provided URLs, wait for its packet, and shape the plan from that evidence before filling any remaining gaps directly.
+2. Before planning or implementation for non-trivial, ambiguous, multi-file, or architectural work, first spawn exactly one bounded read-only `luna_code_analyst` task to map the current workspace; simple local fixes may stay direct. Use `luna_code_analyst` only for that bounded workspace map.
+3. When the user explicitly requests external/current web research, the first external-evidence action must be exactly one bounded `luna_researcher` spawn, before lead web research. This includes internet research, external references, current documentation, library comparisons, and proven patterns. Give it one bounded evidence question and any user-provided URLs, wait for its packet, and shape the plan from that evidence before filling any remaining gaps directly.
 4. Use `luna_worker` only for one fully specified narrow implementation or validation milestone.
 5. For each plan step, record role, count (usually one), owned scope/files, dependencies, focused check, and escalation. For lead-owned critical steps, use count zero and state why direct lead work is necessary. Run only independent tasks concurrently; never overlap writers or create recursive delegation.
 6. Keep orchestration, critical decisions, integration acceptance, and user communication with the lead; routine work stays in bounded Luna assignments.

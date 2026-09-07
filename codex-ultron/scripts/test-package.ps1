@@ -140,9 +140,14 @@ foreach ($leadName in $leadContracts.Keys) {
     }
 }
 
-foreach ($sourcePath in @("agents\ultron.toml", "profiles\ultron.config.toml", "instructions\ultron.md")) {
-    $content = Get-Content (Join-Path $packageRoot $sourcePath) -Raw
-    Assert-True ($content -match 'first external-evidence action must be a `luna_researcher` spawn') "$sourcePath is missing the mandatory research handoff."
+$codePreflight = 'Before planning or implementation for non-trivial, ambiguous, multi-file, or architectural work, first spawn exactly one bounded read-only `luna_code_analyst` task to map the current workspace; simple local fixes may stay direct.'
+$researchPreflight = 'When the user explicitly requests external/current web research, the first external-evidence action must be exactly one bounded `luna_researcher` spawn, before lead web research.'
+foreach ($leadName in @("edith", "jarvis", "ultron")) {
+    foreach ($sourcePath in @("agents\$leadName.toml", "profiles\$leadName.config.toml", "instructions\$leadName.md")) {
+        $content = Get-Content (Join-Path $packageRoot $sourcePath) -Raw
+        Assert-True ($content -match [regex]::Escape($codePreflight)) "$sourcePath is missing the gated Luna code-analysis preflight."
+        Assert-True ($content -match [regex]::Escape($researchPreflight)) "$sourcePath is missing the gated Luna research preflight."
+    }
 }
 
 foreach ($sourcePath in @("agents\edith.toml", "agents\jarvis.toml", "agents\ultron.toml", "profiles\edith.config.toml", "profiles\jarvis.config.toml", "profiles\ultron.config.toml", "instructions\edith.md", "instructions\jarvis.md", "instructions\ultron.md")) {
@@ -176,6 +181,8 @@ Assert-True ($skill -match 'immediately after its focused validation') "Skill mu
 Assert-True ($skill -notmatch 'Codex 0\.147|fork_turns') "Skill contains obsolete runtime-specific fork guidance."
 Assert-True ($skill -notmatch 'primary Codex thread|does not receive the native spawn') "Skill contains an obsolete primary-thread restriction."
 Assert-True ($skill -match "first external-evidence action") "Skill must require Luna research before direct external research."
+Assert-True ($skill -match [regex]::Escape($codePreflight)) "Skill must require the gated Luna code-analysis preflight."
+Assert-True ($skill -match [regex]::Escape($researchPreflight)) "Skill must require the gated Luna research preflight."
 Assert-True ($skill -match "gpt-6-astra.*gpt-5\.6-sol.*gpt-5\.6-luna") "Skill model policy is incomplete."
 Assert-True ($skill -match "bundled Browser plugin") "Skill must require browser validation for web-facing work."
 Assert-True ($metadata -match 'display_name: "Codex Ultron"') "Desktop skill metadata is missing."

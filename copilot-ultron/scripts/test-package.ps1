@@ -118,12 +118,16 @@ foreach ($agentFile in $agentFiles) {
 Assert-True ((($agentNames | Sort-Object) -join "`n") -eq ($expectedAgents -join "`n")) "Agent names do not match the expected package roles."
 Assert-True (($agentNames | Select-Object -Unique).Count -eq $agentNames.Count) "Agent names must be unique."
 
+$codePreflight = 'Before planning or implementation for non-trivial, ambiguous, multi-file, or architectural work, first spawn exactly one bounded read-only `luna-code-analyst` task to map the current workspace; simple local fixes may stay direct.'
+$researchPreflight = 'When the user explicitly requests external/current web research, the first external-evidence action must be exactly one bounded `luna-researcher` spawn, before lead web research.'
 foreach ($leadName in @("ultron", "jarvis", "edith")) {
     $content = Get-Content (Join-Path $agentRoot "$leadName.agent.md") -Raw
     foreach ($workerName in $expectedAgents | Where-Object { $_ -like "luna-*" }) {
         Assert-True ($content -match [regex]::Escape($workerName)) "$leadName does not allow $workerName."
     }
     Assert-True ($content -match "Delegate routine .* exact Luna role") "$leadName is missing routine Luna delegation."
+    Assert-True ($content -match [regex]::Escape($codePreflight)) "$leadName is missing the gated Luna code-analysis preflight."
+    Assert-True ($content -match [regex]::Escape($researchPreflight)) "$leadName is missing the gated Luna research preflight."
     Assert-True ($content -match "Do not emit routine intermediary") "$leadName must suppress routine intermediary narration."
     Assert-True ($content -match 'respond only with `0`') "$leadName must use the binary success response."
     Assert-True ($content -match 'respond only with `1`') "$leadName must use the binary failure response."
@@ -191,6 +195,8 @@ if ((Test-Path (Join-Path $workspaceAgentRoot ".ultron-orchestrator-agents")) -a
     Assert-True ((($packagedSkill -replace "`r`n", "`n").TrimEnd()) -ceq (($workspaceSkill -replace "`r`n", "`n").TrimEnd())) "Packaged and workspace skill definitions differ."
 }
 Assert-True ($packagedSkill -match "No Progress Narration") "Orchestrator skill is missing the silent execution policy."
+Assert-True ($packagedSkill -match [regex]::Escape($codePreflight)) "Orchestrator skill must require the gated Luna code-analysis preflight."
+Assert-True ($packagedSkill -match [regex]::Escape($researchPreflight)) "Orchestrator skill must require the gated Luna research preflight."
 Assert-True ($packagedSkill -match 'responds only with `0`') "Orchestrator skill must enforce binary success output."
 Assert-True ($packagedSkill -match 'or `1` when completion is impossible') "Orchestrator skill must enforce binary failure output."
 Assert-True ($packagedSkill -match "multiple subagents in one parallel batch") "Orchestrator skill must permit safe parallel delegation."
