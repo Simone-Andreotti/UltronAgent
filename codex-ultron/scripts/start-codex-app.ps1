@@ -13,7 +13,7 @@ if ($args.Count -gt 0) {
 $leadDefinitions = @{
     edith = @{ Model = "gpt-5.6-luna"; Effort = "xhigh"; Instructions = "edith.md"; Label = "Edith" }
     jarvis = @{ Model = "gpt-5.6-sol"; Effort = "high"; Instructions = "jarvis.md"; Label = "Jarvis" }
-    ultron = @{ Model = "gpt-6-astra"; Effort = "medium"; Instructions = "ultron.md"; Label = "Ultron" }
+    ultron = @{ Model = "gpt-5.6-sol"; Effort = "high"; Instructions = "ultron.md"; Label = "Ultron" }
 }
 
 if (-not $Agent) {
@@ -32,9 +32,11 @@ if (-not $Agent) {
 
 $selectedLead = $leadDefinitions[$Agent]
 $codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME ".codex" }
-foreach ($lunaAgent in @("luna_code_analyst.toml", "luna_researcher.toml", "luna_worker.toml")) {
-    if (-not (Test-Path (Join-Path $codexHome "agents\$lunaAgent"))) {
-        throw "Codex Ultron agent '$lunaAgent' is not installed. Run install.ps1 first."
+$requiredAgents = @("luna_code_analyst.toml", "luna_researcher.toml", "luna_worker.toml")
+if ($Agent -eq "ultron") { $requiredAgents += "astra_specialist.toml" }
+foreach ($requiredAgent in $requiredAgents) {
+    if (-not (Test-Path (Join-Path $codexHome "agents\$requiredAgent"))) {
+        throw "Codex Ultron agent '$requiredAgent' is not installed. Run install.ps1 first."
     }
 }
 

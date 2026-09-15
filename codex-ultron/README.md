@@ -4,10 +4,11 @@ Portable Ultron, Jarvis, Edith, and Luna setup for Codex CLI and the Codex surfa
 
 ## Model Routing
 
-- Ultron: `gpt-6-astra`, medium reasoning
+- Ultron: `gpt-5.6-sol`, high reasoning
 - Jarvis: `gpt-5.6-sol`, high reasoning
 - Edith: `gpt-5.6-luna`, maximum (`xhigh`) reasoning
 - Every Luna subagent: `gpt-5.6-luna`, maximum (`xhigh`) reasoning
+- Ultron-only Astra specialist: `gpt-6-astra`, high reasoning
 
 The CLI and desktop launchers select the requested lead profile and model automatically. Custom Luna agent files select their own model automatically when spawned. Generic Codex chats do not permit a skill to replace the model of an already-running thread, so use the matching launcher when deterministic lead routing matters.
 
@@ -15,7 +16,7 @@ Leads own orchestration, critical decisions, integration acceptance, and user co
 
 For requests that explicitly ask for internet or web research, external references, current documentation, library comparisons, or proven patterns, Ultron makes a fresh `luna_researcher` child its first external-evidence action. The lead waits for that bounded evidence packet before planning and only researches directly afterward to fill a specific gap. Profiles and launchers enable live web search by default.
 
-Codex loads the three Luna specialties as first-class custom agents from `~/.codex/agents` or a trusted project's `.codex/agents`. Leads select the exact underscore role name through the native subagent workflow. Each standalone Luna TOML owns its model, reasoning effort, sandbox, and instructions; omitted plugin and tool integrations inherit from the parent. Assignments name only the required plan and files instead of copying full parent history. Luna work remains bounded and non-orchestrating.
+Codex loads the three Luna specialties and the Astra specialist as first-class custom agents from `~/.codex/agents` or a trusted project's `.codex/agents`. Leads select exact underscore role names through the native subagent workflow. Each standalone TOML owns its model, reasoning effort, sandbox, and instructions; omitted plugin and tool integrations inherit from the parent. Assignments name only the required plan and files instead of copying full parent history. Luna work remains bounded and non-orchestrating. Only Ultron may select `astra_specialist`, and only for one exceptionally difficult, critical, self-contained execution task such as advanced 3D modeling. It is never used for orchestration or as a review, test, check, validation, QA, integration, or final-acceptance agent; Jarvis and Edith are explicitly prohibited from selecting it.
 
 Before the first implementation edit for non-trivial work, every lead entry path creates `tasks/plans/<task-slug>.md`. The file records Current Architecture, Intended Design, Preserved Interfaces, checkbox Milestones, and Validation. One milestone is marked in progress and checked immediately after focused validation before the next begins. Session Plan mode and internal todo state do not replace this repository artifact; `luna_worker` requires a ready plan milestone for non-trivial assignments while allowing trivial one-packet work to proceed.
 
@@ -87,7 +88,7 @@ chmod +x scripts/*.sh
 The launchers reject profile, model, provider, reasoning, and arbitrary config overrides. Direct equivalents are:
 
 ```sh
-codex --profile ultron --model gpt-6-astra
+codex --profile ultron --model gpt-5.6-sol
 codex --profile jarvis --model gpt-5.6-sol
 ```
 

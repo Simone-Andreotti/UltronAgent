@@ -73,7 +73,7 @@ is_managed_name() {
 
     [ "$skill_identifies_package" = "true" ] || return 1
     case "$legacy_kind:$candidate_name" in
-        agent:edith.agent.md|agent:jarvis.agent.md|agent:luna-code-analyst.agent.md|agent:luna-researcher.agent.md|agent:luna-worker.agent.md|agent:ultron.agent.md|prompt:explain.prompt.md)
+        agent:astra-specialist.agent.md|agent:edith.agent.md|agent:jarvis.agent.md|agent:luna-code-analyst.agent.md|agent:luna-researcher.agent.md|agent:luna-worker.agent.md|agent:ultron.agent.md|prompt:explain.prompt.md)
             return 0
             ;;
     esac

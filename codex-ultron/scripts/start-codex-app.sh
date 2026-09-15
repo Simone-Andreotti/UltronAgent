@@ -50,13 +50,15 @@ fi
 case "$agent" in
     edith) model="gpt-5.6-luna"; effort="xhigh"; instructions_file="edith.md" ;;
     jarvis) model="gpt-5.6-sol"; effort="high"; instructions_file="jarvis.md" ;;
-    ultron) model="gpt-6-astra"; effort="medium"; instructions_file="ultron.md" ;;
+    ultron) model="gpt-5.6-sol"; effort="high"; instructions_file="ultron.md" ;;
     *) printf 'Unknown lead: %s\n' "$agent" >&2; exit 2 ;;
 esac
 
 codex_home=${CODEX_HOME:-"$HOME/.codex"}
-for luna_agent in luna_code_analyst.toml luna_researcher.toml luna_worker.toml; do
-    [ -f "$codex_home/agents/$luna_agent" ] || { printf '%s\n' "Codex Ultron agent '$luna_agent' is not installed. Run install.sh first." >&2; exit 1; }
+required_agents="luna_code_analyst.toml luna_researcher.toml luna_worker.toml"
+[ "$agent" = "ultron" ] && required_agents="$required_agents astra_specialist.toml"
+for required_agent in $required_agents; do
+    [ -f "$codex_home/agents/$required_agent" ] || { printf '%s\n' "Codex Ultron agent '$required_agent' is not installed. Run install.sh first." >&2; exit 1; }
 done
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)

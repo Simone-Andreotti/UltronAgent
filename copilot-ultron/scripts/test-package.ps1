@@ -8,6 +8,7 @@ $codexPackageRoot = Join-Path $workspaceRoot "codex-ultron"
 $agentRoot = Join-Path $packageRoot "agents"
 $promptRoot = Join-Path $packageRoot "prompts"
 $expectedAgents = @(
+    "astra-specialist",
     "edith",
     "jarvis",
     "luna-code-analyst",
@@ -16,20 +17,22 @@ $expectedAgents = @(
     "ultron"
 )
 $expectedEfforts = @{
-    "ultron" = "medium"
+    "ultron" = "high"
     "jarvis" = "high"
     "edith" = "xhigh"
     "luna-code-analyst" = "high"
     "luna-researcher" = "medium"
     "luna-worker" = "medium"
+    "astra-specialist" = "high"
 }
 $expectedModels = @{
-    "ultron" = "gpt-6-astra"
+    "ultron" = "gpt-5.6-sol"
     "jarvis" = "gpt-5.6-sol"
     "edith" = "gpt-5.6-luna"
     "luna-code-analyst" = "gpt-5.6-luna"
     "luna-researcher" = "gpt-5.6-luna"
     "luna-worker" = "gpt-5.6-luna"
+    "astra-specialist" = "gpt-6-astra"
 }
 
 function Assert-True {
@@ -65,7 +68,7 @@ Assert-True (($mcpConfig.mcpServers.'ultron-playwright'.tools -join "") -eq "*")
 Assert-True (Test-Path (Join-Path $packageRoot $manifest.agents)) "Manifest agents path does not exist."
 Assert-True (Test-Path (Join-Path $packageRoot $manifest.skills)) "Manifest skills path does not exist."
 Assert-True (Test-Path $promptRoot) "Package prompts path does not exist."
-Assert-True ($config.model -eq "gpt-6-astra") "Example config must default to GPT-6 Astra."
+Assert-True ($config.model -eq "gpt-5.6-sol") "Example config must default to GPT-5.6 Sol."
 Assert-True ($config.contextTier -eq "default") "Example config must use default context."
 foreach ($lunaName in $expectedAgents | Where-Object { $_ -like "luna-*" }) {
     $lunaConfig = $config.subagents.agents."ultron-orchestrator:$lunaName"
@@ -153,6 +156,23 @@ foreach ($leadName in @("ultron", "jarvis", "edith")) {
     Assert-True ($content -match "private chain-of-thought") "$leadName explain mode must protect private reasoning."
 }
 
+$ultronContent = Get-Content (Join-Path $agentRoot "ultron.agent.md") -Raw
+Assert-True ($ultronContent -match "astra-specialist") "Ultron must allow the Astra specialist."
+Assert-True ($ultronContent -match "exceptionally difficult, critical, self-contained") "Ultron must gate Astra specialist use."
+Assert-True ($ultronContent -match 'Never use `astra-specialist` for orchestration') "Ultron must reserve Astra specialist for execution."
+foreach ($leadName in @("jarvis", "edith")) {
+    $content = Get-Content (Join-Path $agentRoot "$leadName.agent.md") -Raw
+    Assert-True ($content -match 'Never invoke or instruct `astra-specialist`') "$leadName must prohibit the Astra specialist."
+}
+
+$astraContent = Get-Content (Join-Path $agentRoot "astra-specialist.agent.md") -Raw
+Assert-True ($astraContent -match "(?m)^agents:\s*\[\]") "Astra specialist must not invoke subagents."
+Assert-True ($astraContent -match "(?m)^user-invocable:\s*false") "Astra specialist must be hidden from users."
+Assert-True ($astraContent -match "gpt-6-astra") "Astra specialist must use GPT-6 Astra."
+Assert-True ($astraContent -match "(?m)^reasoningEffort:\s*high") "Astra specialist must use high reasoning."
+Assert-True ($astraContent -match "Never orchestrate") "Astra specialist must reject orchestration."
+Assert-True ($astraContent -match "Never accept an assignment whose primary purpose is review, testing, checking") "Astra specialist must reject checks."
+
 $analystBoundary = 'Start with task-named files or symbols; if none are named, use only targeted searches to locate them. Never inventory directories or read unrelated files. Stop once evidence answers the assigned question.'
 $analystOutputBoundary = 'Return a compact evidence packet of at most 500 words, except when a blocker needs more detail'
 $analyst = Get-Content (Join-Path $agentRoot "luna-code-analyst.agent.md") -Raw
@@ -229,7 +249,7 @@ Assert-True ($packagedExplainPrompt -notmatch "(?m)^model:") "Explain prompt mus
 Assert-True ($packagedExplainPrompt -match "private chain-of-thought") "Explain prompt must protect private reasoning."
 
 $nativeAgents = @{
-    "ultron.toml" = "gpt-6-astra"
+    "ultron.toml" = "gpt-5.6-sol"
     "jarvis.toml" = "gpt-5.6-sol"
     "luna_code_analyst.toml" = "gpt-5.6-luna"
     "luna_researcher.toml" = "gpt-5.6-luna"
@@ -241,10 +261,10 @@ foreach ($nativeAgent in $nativeAgents.Keys) {
 }
 $launchers = @{
     "start-edith.ps1" = @{ Model = "gpt-5.6-luna"; Effort = "xhigh" }
-    "start-ultron.ps1" = @{ Model = "gpt-6-astra"; Effort = "medium" }
+    "start-ultron.ps1" = @{ Model = "gpt-5.6-sol"; Effort = "high" }
     "start-jarvis.ps1" = @{ Model = "gpt-5.6-sol"; Effort = "high" }
     "start-edith.sh" = @{ Model = "gpt-5.6-luna"; Effort = "xhigh" }
-    "start-ultron.sh" = @{ Model = "gpt-6-astra"; Effort = "medium" }
+    "start-ultron.sh" = @{ Model = "gpt-5.6-sol"; Effort = "high" }
     "start-jarvis.sh" = @{ Model = "gpt-5.6-sol"; Effort = "high" }
 }
 foreach ($launcherName in $launchers.Keys) {
@@ -323,8 +343,9 @@ foreach ($launcherName in @("start-edith.sh", "start-ultron.sh", "start-jarvis.s
 }
 
 $readme = Get-Content (Join-Path $packageRoot "README.md") -Raw
-Assert-True ($readme -match 'Ultron requests `gpt-6-astra` with medium reasoning') "README must document Ultron model routing."
-Assert-True ($readme -match 'Jarvis requests `gpt-5\.6-sol` with high reasoning') "README must document Jarvis model routing."
+Assert-True ($readme -match 'Ultron and Jarvis request `gpt-5\.6-sol` with high reasoning') "README must document Ultron model routing."
+Assert-True ($readme -match 'Ultron alone may invoke `astra-specialist`') "README must document Astra specialist routing."
+Assert-True ($readme -match 'Ultron and Jarvis request `gpt-5\.6-sol` with high reasoning') "README must document Jarvis model routing."
 Assert-True ($readme -match 'Edith requests `gpt-5\.6-luna` with maximum \(`xhigh`\) reasoning') "README must document Edith model routing."
 Assert-True ($readme -match 'canonical `playwright/\*` namespace') "README must document the canonical Playwright namespace."
 Assert-True ($readme -match '@mcp playwright') "README must document the VS Code Playwright MCP installation."

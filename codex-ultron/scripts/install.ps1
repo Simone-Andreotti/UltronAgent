@@ -136,7 +136,7 @@ $managedRoots = @(
     [pscustomobject]@{
         Root = $agentRoot
         Marker = $agentMarkerName
-        LegacyNames = @("edith.toml", "jarvis.toml", "luna_code_analyst.toml", "luna_researcher.toml", "luna_worker.toml", "ultron.toml")
+        LegacyNames = @("astra_specialist.toml", "edith.toml", "jarvis.toml", "luna_code_analyst.toml", "luna_researcher.toml", "luna_worker.toml", "ultron.toml")
     }
 )
 if ($Scope -eq "User") {

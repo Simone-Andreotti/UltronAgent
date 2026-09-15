@@ -88,7 +88,7 @@ is_managed_name() {
 
     [ "$skill_identifies_package" = "true" ] || return 1
     case "$legacy_kind:$candidate_name" in
-        agent:edith.toml|agent:jarvis.toml|agent:luna_code_analyst.toml|agent:luna_researcher.toml|agent:luna_worker.toml|agent:ultron.toml|profile:edith.config.toml|profile:jarvis.config.toml|profile:ultron.config.toml)
+        agent:astra_specialist.toml|agent:edith.toml|agent:jarvis.toml|agent:luna_code_analyst.toml|agent:luna_researcher.toml|agent:luna_worker.toml|agent:ultron.toml|profile:edith.config.toml|profile:jarvis.config.toml|profile:ultron.config.toml)
             return 0
             ;;
     esac

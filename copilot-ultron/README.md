@@ -8,7 +8,7 @@ Nothing in this folder installs itself. The included installer only runs when yo
 
 Effort metadata includes both current `reasoningEffort` and the legacy `reasoning-effort` key read by CLI 1.0.68, with identical values. That CLI ignores the current spelling with a warning; retaining its legacy key prevents direct selection from inheriting an unintended effort. Hosts may warn about the spelling they do not recognize. VS Code controls effort through its model picker.
 
-The package never uses Copilot Auto in its launchers. Ultron requests `gpt-6-astra` with medium reasoning, Jarvis requests `gpt-5.6-sol` with high reasoning, and Edith requests `gpt-5.6-luna` with maximum (`xhigh`) reasoning. Every Luna role requests `gpt-5.6-luna`: code analysis uses high reasoning, while research and implementation use medium. Agent frontmatter uses the supported `model` field and CLI `reasoningEffort` field; VS Code applies the model request while its session picker controls effort. The example CLI settings use namespaced subagent keys and request the `default` context tier. Launchers leave context selection to the host's default because some CLI prompt modes reject the context flag. Account, model availability, host picker, and organization policy can replace an unavailable request with the active session model or effort; the package never promises an unavailable slug.
+The package never uses Copilot Auto in its launchers. Ultron and Jarvis request `gpt-5.6-sol` with high reasoning, Edith requests `gpt-5.6-luna` with maximum (`xhigh`) reasoning, and Ultron alone may invoke `astra-specialist` on `gpt-6-astra` with high reasoning for one exceptionally difficult, critical, self-contained execution task such as advanced 3D modeling. The Astra specialist never orchestrates or performs checks, and Jarvis and Edith must never invoke it. Every Luna role requests `gpt-5.6-luna`: code analysis uses high reasoning, while research and implementation use medium. Agent frontmatter uses the supported `model` field and CLI `reasoningEffort` field; VS Code applies the model request while its session picker controls effort. The example CLI settings use namespaced subagent keys and request the `default` context tier. Launchers leave context selection to the host's default because some CLI prompt modes reject the context flag. Account, model availability, host picker, and organization policy can replace an unavailable request with the active session model or effort; the package never promises an unavailable slug.
 
 Older Copilot CLI builds may ignore newer agent metadata and use the session model or effort; update the CLI when per-agent routing is required.
 
@@ -30,7 +30,7 @@ For CLI sessions, use `--max-ai-credits` to set a hard session limit. The minimu
 - `.github/plugin/marketplace.json`: versioned `ultron-agent` marketplace manifest for supported installs and upgrades
 - `.mcp.json`: pinned `ultron-playwright` browser automation fallback for Copilot CLI
 - `skills/ultron-orchestrator/SKILL.md`: single chat skill entry point, `/ultron-orchestrator`
-- `agents/`: Edith, Ultron, Jarvis, and three bounded Luna custom agents
+- `agents/`: Edith, Ultron, Jarvis, three bounded Luna custom agents, and the Ultron-only Astra specialist
 - `prompts/explain.prompt.md`: `/explain` slash command for the selected lead
 - `scripts/start-ultron.*`: start Copilot CLI with Ultron on Windows, Linux, or macOS
 - `scripts/start-jarvis.*`: start Copilot CLI with Jarvis on Windows, Linux, or macOS
@@ -170,11 +170,12 @@ The copy installers record package ownership in `.ultron-orchestrator-agents` an
 
 ## Architecture
 
-Edith, Ultron, and Jarvis are user-invocable leads. They can call only the three hidden Luna roles:
+Edith, Ultron, and Jarvis are user-invocable leads. Edith and Jarvis can call only the three hidden Luna roles. Ultron can additionally call the hidden `astra-specialist` only for exceptionally difficult, critical, self-contained execution work; it cannot be used for orchestration or checks:
 
 - `luna-code-analyst`: read-only repository analysis
 - `luna-researcher`: read-only documentation and evidence research
 - `luna-worker`: one narrow implementation or focused check; non-trivial edits require a ready written plan milestone
+- `astra-specialist`: Ultron-only execution for one exceptionally difficult, critical single task; no orchestration, checks, or final acceptance
 
 Edith owns simpler work; Jarvis owns medium-complexity work; Ultron owns complex work. Leads orchestrate and own critical decisions, integration, validation, and the binary completion response; routine work goes to the exact Luna role that owns it. Luna roles cannot delegate, request GPT-5.6 Luna and default context, and use high reasoning only for code analysis; research and implementation use medium. Use the minimum worker count, normally one, and parallelize only independent tracks. Host policy controls actual permissions, model selection, effort, and browser availability.
 
@@ -185,7 +186,7 @@ Before the first implementation edit for non-trivial work, the lead creates `tas
 - Copilot custom agents use Markdown with YAML frontmatter rather than Codex TOML.
 - Copilot agents inherit the host's available tools, including VS Code's integrated browser, newer CLI Playwright tools, and the packaged `ultron-playwright` fallback; permission mode remains a host/session control.
 - Copilot does not expose Codex service tier, desktop plugin, notice, or host permission configuration through these files.
-- Fixed CLI launcher assignments replace Copilot Auto: Edith uses Luna, Ultron uses Astra, and Jarvis uses Sol. VS Code receives the model requests from frontmatter, while its session picker controls effort subject to account policy; the example settings request default context.
+- Fixed CLI launcher assignments replace Copilot Auto: Edith uses Luna, Ultron uses Sol, and Jarvis uses Sol. Ultron's optional Astra specialist is selected only through its child-agent allow-list. VS Code receives the model requests from frontmatter, while its session picker controls effort subject to account policy; the example settings request default context.
 
 ## Validation
 

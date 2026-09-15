@@ -7,28 +7,30 @@ $agentRoot = Join-Path $packageRoot "agents"
 $profileRoot = Join-Path $packageRoot "profiles"
 $expectedAgents = @{
     "edith.toml" = "gpt-5.6-luna"
-    "ultron.toml" = "gpt-6-astra"
+    "ultron.toml" = "gpt-5.6-sol"
     "jarvis.toml" = "gpt-5.6-sol"
+    "astra_specialist.toml" = "gpt-6-astra"
     "luna_code_analyst.toml" = "gpt-5.6-luna"
     "luna_researcher.toml" = "gpt-5.6-luna"
     "luna_worker.toml" = "gpt-5.6-luna"
 }
 $expectedAgentEfforts = @{
     "edith.toml" = "xhigh"
-    "ultron.toml" = "medium"
+    "ultron.toml" = "high"
     "jarvis.toml" = "high"
+    "astra_specialist.toml" = "high"
     "luna_code_analyst.toml" = "xhigh"
     "luna_researcher.toml" = "xhigh"
     "luna_worker.toml" = "xhigh"
 }
 $expectedProfiles = @{
     "edith.config.toml" = "gpt-5.6-luna"
-    "ultron.config.toml" = "gpt-6-astra"
+    "ultron.config.toml" = "gpt-5.6-sol"
     "jarvis.config.toml" = "gpt-5.6-sol"
 }
 $expectedProfileEfforts = @{
     "edith.config.toml" = "xhigh"
-    "ultron.config.toml" = "medium"
+    "ultron.config.toml" = "high"
     "jarvis.config.toml" = "high"
 }
 
@@ -43,7 +45,7 @@ function Assert-True {
     if (-not $Condition) { throw $Message }
 }
 
-Assert-True ((Get-ChildItem $agentRoot -Filter "*.toml").Count -eq 6) "Package must contain six custom agents."
+Assert-True ((Get-ChildItem $agentRoot -Filter "*.toml").Count -eq 7) "Package must contain seven custom agents."
 foreach ($agentFile in $expectedAgents.Keys) {
     $content = (Get-Content (Join-Path $agentRoot $agentFile) -Raw) -replace "`r`n", "`n"
     Assert-True ($content -match '(?m)^name = "[^"]+"$') "$agentFile is missing a name."
@@ -90,6 +92,15 @@ foreach ($readOnlyFile in @("luna_code_analyst.toml", "luna_researcher.toml")) {
     Assert-True ($content -match 'Runtime access is full, but the task contract remains read-only') "$readOnlyFile must preserve its read-only task contract."
 }
 
+$astraSpecialist = (Get-Content (Join-Path $agentRoot "astra_specialist.toml") -Raw) -replace "`r`n", "`n"
+Assert-True ($astraSpecialist -match '(?m)^name = "astra_specialist"$') "Astra specialist must preserve its exact native identifier."
+Assert-True ($astraSpecialist -match 'assigned by Ultron') "Astra specialist must accept work only from Ultron."
+Assert-True ($astraSpecialist -match 'Reject every assignment from Jarvis, Edith, a Luna role') "Astra specialist must reject every other lead or child caller."
+Assert-True ($astraSpecialist -match 'exceptional-difficulty and criticality gates') "Astra specialist must require both routing gates."
+Assert-True ($astraSpecialist -match 'Never orchestrate') "Astra specialist must not orchestrate."
+Assert-True ($astraSpecialist -match 'primary purpose is review, testing, checking, validation, verification, QA') "Astra specialist must not be used as a checking agent."
+Assert-True ($astraSpecialist -match '(?m)^\[agents\]\nenabled = false$') "Astra specialist must structurally disable recursive delegation."
+
 $analystBoundary = 'Start with task-named files or symbols; if none are named, use only targeted searches to locate them. Never inventory directories or read unrelated files. Stop once evidence answers the assigned question.'
 $analystOutputBoundary = 'Return one compact packet of at most 500 words, except when a blocker needs more detail'
 $analyst = Get-Content (Join-Path $agentRoot "luna_code_analyst.toml") -Raw
@@ -123,11 +134,11 @@ foreach ($profileFile in $expectedProfiles.Keys) {
     Assert-True ($content -match 'respond only with `1`') "$profileFile must use binary failure output."
     Assert-True ($content -match '(?m)^default_subagent_model = "gpt-5\.6-luna"$') "$profileFile must default subagents to Luna."
     Assert-True ($content -match '(?m)^default_subagent_reasoning_effort = "xhigh"$') "$profileFile must use maximum Luna reasoning by default."
-    Assert-True ($content -notmatch '(?m)^\[agents\.(edith|jarvis|ultron|luna_code_analyst|luna_researcher|luna_worker)\]$') "$profileFile must not redeclare standalone custom agent roles."
+    Assert-True ($content -notmatch '(?m)^\[agents\.(edith|jarvis|ultron|astra_specialist|luna_code_analyst|luna_researcher|luna_worker)\]$') "$profileFile must not redeclare standalone custom agent roles."
 }
 
 $sharedConfig = (Get-Content (Join-Path $packageRoot "config\codex-config.example.toml") -Raw) -replace "`r`n", "`n"
-Assert-True ($sharedConfig -notmatch '(?m)^\[agents\.(edith|jarvis|ultron|luna_code_analyst|luna_researcher|luna_worker)\]$') "Project config must not redeclare standalone custom agent roles."
+Assert-True ($sharedConfig -notmatch '(?m)^\[agents\.(edith|jarvis|ultron|astra_specialist|luna_code_analyst|luna_researcher|luna_worker)\]$') "Project config must not redeclare standalone custom agent roles."
 Assert-True ($sharedConfig -match '(?m)^approval_policy = "never"$') "Example config must disable approval prompts."
 Assert-True ($sharedConfig -match '(?m)^sandbox_mode = "danger-full-access"$') "Example config must default to full access."
 Assert-True ($sharedConfig -match '(?m)^\[plugins\."browser@openai-bundled"\]\nenabled = true$') "Example config must enable the bundled Browser plugin."
@@ -175,6 +186,19 @@ foreach ($sourcePath in @("agents\edith.toml", "agents\jarvis.toml", "agents\ult
     Assert-True ($content -notmatch 'primary Codex thread|does not receive the native spawn') "$sourcePath contains an obsolete primary-thread restriction."
 }
 
+foreach ($sourcePath in @("agents\ultron.toml", "profiles\ultron.config.toml", "instructions\ultron.md")) {
+    $content = Get-Content (Join-Path $packageRoot $sourcePath) -Raw
+    Assert-True ($content -match 'Only Ultron may select the exact `astra_specialist` agent') "$sourcePath must reserve Astra specialist selection to Ultron."
+    Assert-True ($content -match 'exceptionally difficult, critical, self-contained execution task') "$sourcePath must enforce the Astra difficulty and criticality gate."
+    Assert-True ($content -match 'Never use `astra_specialist` for orchestration, planning, analysis, research, routine implementation, review, testing, checks, validation, QA, integration acceptance, or final acceptance') "$sourcePath must forbid Astra orchestration and checking work."
+}
+foreach ($leadName in @("edith", "jarvis")) {
+    foreach ($sourcePath in @("agents\$leadName.toml", "profiles\$leadName.config.toml", "instructions\$leadName.md")) {
+        $content = Get-Content (Join-Path $packageRoot $sourcePath) -Raw
+        Assert-True ($content -match 'Never select or instruct `astra_specialist`; that agent is reserved exclusively for Ultron') "$sourcePath must prohibit Astra specialist delegation."
+    }
+}
+
 $skillRoot = Join-Path $packageRoot "skills\codex-ultron"
 $skill = (Get-Content (Join-Path $skillRoot "SKILL.md") -Raw) -replace "`r`n", "`n"
 $metadata = (Get-Content (Join-Path $skillRoot "agents\openai.yaml") -Raw) -replace "`r`n", "`n"
@@ -189,7 +213,9 @@ Assert-True ($skill -notmatch 'primary Codex thread|does not receive the native 
 Assert-True ($skill -match "first external-evidence action") "Skill must require Luna research before direct external research."
 Assert-True ($skill -match [regex]::Escape($codePreflight)) "Skill must require the gated Luna code-analysis preflight."
 Assert-True ($skill -match [regex]::Escape($researchPreflight)) "Skill must require the gated Luna research preflight."
-Assert-True ($skill -match "gpt-6-astra.*gpt-5\.6-sol.*gpt-5\.6-luna") "Skill model policy is incomplete."
+Assert-True ($skill -match 'Ultron and Jarvis use `gpt-5\.6-sol` with high reasoning') "Skill must route Ultron and Jarvis through Sol high."
+Assert-True ($skill -match '`astra_specialist`.*`gpt-6-astra` with high reasoning') "Skill must document the Astra high specialist."
+Assert-True ($skill -match 'Jarvis and Edith must never select or instruct it') "Skill must prohibit non-Ultron Astra delegation."
 Assert-True ($skill -match "bundled Browser plugin") "Skill must require browser validation for web-facing work."
 Assert-True ($metadata -match 'display_name: "Codex Ultron"') "Desktop skill metadata is missing."
 Assert-True ($metadata -match 'default_prompt: .*\$codex-ultron') "Desktop skill metadata must invoke the skill explicitly."
@@ -204,16 +230,16 @@ Assert-True ($readme -match 'danger-full-access') "README must document the full
 
 $launchers = @{
     "start-edith.ps1" = @("edith", "gpt-5.6-luna", "xhigh")
-    "start-ultron.ps1" = @("ultron", "gpt-6-astra", "medium")
+    "start-ultron.ps1" = @("ultron", "gpt-5.6-sol", "high")
     "start-jarvis.ps1" = @("jarvis", "gpt-5.6-sol", "high")
     "start-edith.sh" = @("edith", "gpt-5.6-luna", "xhigh")
-    "start-ultron.sh" = @("ultron", "gpt-6-astra", "medium")
+    "start-ultron.sh" = @("ultron", "gpt-5.6-sol", "high")
     "start-jarvis.sh" = @("jarvis", "gpt-5.6-sol", "high")
     "start-edith-app.ps1" = @("edith", "gpt-5.6-luna", "xhigh")
-    "start-ultron-app.ps1" = @("ultron", "gpt-6-astra", "medium")
+    "start-ultron-app.ps1" = @("ultron", "gpt-5.6-sol", "high")
     "start-jarvis-app.ps1" = @("jarvis", "gpt-5.6-sol", "high")
     "start-edith-app.sh" = @("edith", "gpt-5.6-luna", "xhigh")
-    "start-ultron-app.sh" = @("ultron", "gpt-6-astra", "medium")
+    "start-ultron-app.sh" = @("ultron", "gpt-5.6-sol", "high")
     "start-jarvis-app.sh" = @("jarvis", "gpt-5.6-sol", "high")
 }
 foreach ($launcher in $launchers.Keys) {
@@ -265,7 +291,7 @@ Assert-True ($unifiedCli -match "Choose a Codex lead:") "Unified CLI launcher is
 foreach ($mapping in @(
     'edith = @{ Profile = "edith"; Model = "gpt-5\.6-luna"; Effort = "xhigh"',
     'jarvis = @{ Profile = "jarvis"; Model = "gpt-5\.6-sol"; Effort = "high"',
-    'ultron = @{ Profile = "ultron"; Model = "gpt-6-astra"; Effort = "medium"'
+    'ultron = @{ Profile = "ultron"; Model = "gpt-5\.6-sol"; Effort = "high"'
 )) {
     Assert-True ($unifiedCli -match $mapping) "Unified CLI launcher has an invalid role mapping: $mapping"
 }
@@ -274,7 +300,7 @@ Assert-True ($unifiedApp -match "Choose a Codex lead for the desktop app:") "Uni
 foreach ($mapping in @(
     'edith = @{ Model = "gpt-5\.6-luna"; Effort = "xhigh"; Instructions = "edith\.md"',
     'jarvis = @{ Model = "gpt-5\.6-sol"; Effort = "high"; Instructions = "jarvis\.md"',
-    'ultron = @{ Model = "gpt-6-astra"; Effort = "medium"; Instructions = "ultron\.md"'
+    'ultron = @{ Model = "gpt-5\.6-sol"; Effort = "high"; Instructions = "ultron\.md"'
 )) {
     Assert-True ($unifiedApp -match $mapping) "Unified app launcher has an invalid role mapping: $mapping"
 }
@@ -283,14 +309,14 @@ $unifiedAppShell = Get-Content (Join-Path $PSScriptRoot "start-codex-app.sh") -R
 foreach ($mapping in @(
     'edith\) profile="edith"; model="gpt-5\.6-luna"; effort="xhigh"',
     'jarvis\) profile="jarvis"; model="gpt-5\.6-sol"; effort="high"',
-    'ultron\) profile="ultron"; model="gpt-6-astra"; effort="medium"'
+    'ultron\) profile="ultron"; model="gpt-5\.6-sol"; effort="high"'
 )) {
     Assert-True ($unifiedShell -match $mapping) "Unified shell launcher has an invalid role mapping: $mapping"
 }
 foreach ($mapping in @(
     'edith\) model="gpt-5\.6-luna"; effort="xhigh"; instructions_file="edith\.md"',
     'jarvis\) model="gpt-5\.6-sol"; effort="high"; instructions_file="jarvis\.md"',
-    'ultron\) model="gpt-6-astra"; effort="medium"; instructions_file="ultron\.md"'
+    'ultron\) model="gpt-5\.6-sol"; effort="high"; instructions_file="ultron\.md"'
 )) {
     Assert-True ($unifiedAppShell -match $mapping) "Unified app shell launcher has an invalid role mapping: $mapping"
 }
@@ -341,7 +367,7 @@ try {
     Remove-Item Env:CODEX_ULTRON_FULL_ACCESS -ErrorAction SilentlyContinue
     $defaultCliInvocation = (& (Join-Path $PSScriptRoot "start-ultron.ps1") -Prompt "mock") -join "`n"
     Assert-True ($defaultCliInvocation -match 'dangerously-bypass-approvals-and-sandbox') "CLI launcher must default to full access."
-    Assert-True ($defaultCliInvocation -match 'gpt-6-astra') "CLI launcher mock must preserve Ultron routing."
+    Assert-True ($defaultCliInvocation -match 'gpt-5\.6-sol') "CLI launcher mock must preserve Ultron Sol routing."
     $env:CODEX_ULTRON_FULL_ACCESS = "false"
     $restrictedCliInvocation = (& (Join-Path $PSScriptRoot "start-ultron.ps1") -Prompt "mock") -join "`n"
     Assert-True ($restrictedCliInvocation -match 'sandbox_mode="workspace-write"') "CLI restricted opt-out must force workspace-write."
@@ -359,6 +385,15 @@ try {
     try { & (Join-Path $PSScriptRoot "start-ultron-app.ps1") -WorkingDirectory $tempProject } catch { $missingLunaRejected = $_.Exception.Message -match "luna_researcher.toml" }
     Assert-True $missingLunaRejected "Desktop launcher must reject an incomplete Luna installation."
     Set-Content -Path $missingLunaPath -Value $missingLunaContent -Encoding UTF8
+    $astraPath = Join-Path $agentRoot "astra_specialist.toml"
+    $astraContent = Get-Content $astraPath -Raw
+    Remove-Item $astraPath -Force
+    $jarvisWithoutAstra = (& (Join-Path $PSScriptRoot "start-codex-app.ps1") -Agent jarvis -WorkingDirectory $tempProject) -join "`n"
+    Assert-True ($jarvisWithoutAstra -match 'model="gpt-5\.6-sol"') "Jarvis desktop launcher must not depend on the Ultron-only Astra specialist."
+    $missingAstraRejected = $false
+    try { & (Join-Path $PSScriptRoot "start-codex-app.ps1") -Agent ultron -WorkingDirectory $tempProject } catch { $missingAstraRejected = $_.Exception.Message -match "astra_specialist.toml" }
+    Assert-True $missingAstraRejected "Ultron desktop launcher must reject a missing Astra specialist."
+    Set-Content -Path $astraPath -Value $astraContent -Encoding UTF8
     $env:CODEX_ULTRON_FULL_ACCESS = "false"
     $restrictedAppInvocation = (& (Join-Path $PSScriptRoot "start-ultron-app.ps1") -WorkingDirectory $tempProject) -join "`n"
     Assert-True ($restrictedAppInvocation -match 'sandbox_mode="workspace-write"') "Desktop restricted opt-out must force workspace-write."
@@ -366,7 +401,7 @@ try {
     if ($null -eq $oldFullAccess) { Remove-Item Env:CODEX_ULTRON_FULL_ACCESS -ErrorAction SilentlyContinue } else { $env:CODEX_ULTRON_FULL_ACCESS = $oldFullAccess }
 
     $userFiles = @(Get-ChildItem $tempHome -File -Force -Recurse)
-    Assert-True ($userFiles.Count -eq 13) "User install must create eleven package files and two ownership markers; found $($userFiles.Count)."
+    Assert-True ($userFiles.Count -eq 14) "User install must create twelve package files and two ownership markers; found $($userFiles.Count)."
 
     $agentMarker = Join-Path $agentRoot ".codex-ultron-agents"
     $profileMarker = Join-Path $env:CODEX_HOME ".codex-ultron-profiles"
@@ -464,7 +499,7 @@ try {
             Write-Warning "Codex debug prompt-input is unavailable; skipped effective instruction rendering checks."
         }
         $desktopInstructions = Get-Content (Join-Path $packageRoot "instructions\ultron.md") -Raw | ConvertTo-Json -Compress
-        & codex --config 'model="gpt-6-astra"' --config 'model_reasoning_effort="medium"' --config 'approval_policy="never"' --config 'sandbox_mode="danger-full-access"' --config 'web_search="live"' --config 'plugins."browser@openai-bundled".enabled=true' --config "developer_instructions=$desktopInstructions" mcp list | Out-Null
+        & codex --config 'model="gpt-5.6-sol"' --config 'model_reasoning_effort="high"' --config 'approval_policy="never"' --config 'sandbox_mode="danger-full-access"' --config 'web_search="live"' --config 'plugins."browser@openai-bundled".enabled=true' --config "developer_instructions=$desktopInstructions" mcp list | Out-Null
         Assert-True ($LASTEXITCODE -eq 0) "Codex failed to load desktop-style Ultron configuration."
     } else {
         Write-Warning "Codex CLI not found; skipped executable profile checks."

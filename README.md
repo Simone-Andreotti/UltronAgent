@@ -1,6 +1,6 @@
 # UltronAgent
 
-UltronAgent is a portable multi-agent workflow for Codex and GitHub Copilot. Ultron uses Astra medium, Jarvis uses Sol high, and Edith keeps Luna maximum reasoning. Leads orchestrate bounded Luna agents for analysis, research, implementation, browser testing, and image work; they handle the most difficult or critical work directly only when needed. Non-trivial plans under `tasks/plans/` assign each step a Luna role, count, scope, dependencies, validation, and escalation condition. Use the fewest workers needed and parallelize only independent work.
+UltronAgent is a portable multi-agent workflow for Codex and GitHub Copilot. In the Codex package, Ultron and Jarvis use Sol high, Edith keeps Luna maximum reasoning, and Ultron alone may assign an exceptionally difficult, critical single task to an Astra high specialist. The Copilot package keeps its separately documented host-specific routing. Leads orchestrate bounded Luna agents for analysis, research, implementation, browser testing, and image work. Non-trivial plans under `tasks/plans/` assign each step a role, count, scope, dependencies, validation, and escalation condition. Use the fewest workers needed and parallelize only independent work.
 
 ## Packages
 

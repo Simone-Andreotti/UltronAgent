@@ -127,6 +127,7 @@ $legacyAgentNames = @(
     "luna-code-analyst.agent.md",
     "luna-researcher.agent.md",
     "luna-worker.agent.md",
+    "astra-specialist.agent.md",
     "ultron.agent.md"
 )
 $legacyPromptNames = @("explain.prompt.md")
