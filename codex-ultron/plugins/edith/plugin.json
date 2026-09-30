@@ -1,0 +1,19 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "edith",
+  "version": "1.2.0",
+  "description": "Activate the Edith lead workflow when the user selects or mentions @Edith.",
+  "author": {
+    "name": "Simone Andreotti"
+  },
+  "keywords": ["edith", "orchestration", "lead"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Edith",
+        "shortDescription": "Lead simple implementation and maintenance",
+        "longDescription": "Activate Edith when selected or mentioned by name. Role selection keeps the current chat model and preserves native worker routing."
+      }
+    }
+  }
+}

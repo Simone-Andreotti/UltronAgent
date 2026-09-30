@@ -1,0 +1,6 @@
+interface:
+  display_name: "Jarvis"
+  short_description: "Lead implementation, debugging, and integration"
+
+policy:
+  allow_implicit_invocation: true

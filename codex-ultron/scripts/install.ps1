@@ -4,6 +4,7 @@ param(
     [string]$Scope = "User",
     [string]$ProjectPath = (Get-Location).Path,
     [string]$HomePath = $HOME,
+    [switch]$SkipSkill,
     [switch]$Force
 )
 
@@ -93,6 +94,7 @@ $installFiles = @(
         Destination = Join-Path $skillRoot "agents\openai.yaml"
     }
 )
+if ($SkipSkill) { $installFiles = @() }
 
 foreach ($sourceAgent in $sourceAgentFiles) {
     $installFiles += [pscustomobject]@{
@@ -177,7 +179,7 @@ if ($conflicts -and -not $Force) {
     throw "Refusing partial install because these files exist:$([Environment]::NewLine)$conflictList$([Environment]::NewLine)Re-run with -Force to replace them."
 }
 
-if (($skillIdentifiesPackage -or $Force) -and (Test-Path $skillRoot) -and $PSCmdlet.ShouldProcess($skillRoot, "Remove previous Codex Ultron skill version")) {
+if (-not $SkipSkill -and ($skillIdentifiesPackage -or $Force) -and (Test-Path $skillRoot) -and $PSCmdlet.ShouldProcess($skillRoot, "Remove previous Codex Ultron skill version")) {
     Remove-Item $skillRoot -Recurse -Force
 }
 foreach ($managedRoot in $managedRoots) {

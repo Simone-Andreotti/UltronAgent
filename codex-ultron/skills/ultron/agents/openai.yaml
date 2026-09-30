@@ -1,0 +1,6 @@
+interface:
+  display_name: "Ultron"
+  short_description: "Lead complex architecture and difficult work"
+
+policy:
+  allow_implicit_invocation: true

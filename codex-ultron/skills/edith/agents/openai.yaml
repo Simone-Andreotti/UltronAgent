@@ -1,0 +1,6 @@
+interface:
+  display_name: "Edith"
+  short_description: "Lead simple implementations, fixes, and maintenance"
+
+policy:
+  allow_implicit_invocation: true

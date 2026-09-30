@@ -217,6 +217,30 @@ foreach ($leadName in @("edith", "jarvis")) {
     }
 }
 
+$marketplace = Get-Content (Join-Path $packageRoot ".agents\plugins\marketplace.json") -Raw | ConvertFrom-Json
+$rolePluginNames = @("ultron", "jarvis", "edith")
+Assert-True ($marketplace.name -eq "ultron-codex" -and $marketplace.plugins.Count -eq $rolePluginNames.Count) "Desktop marketplace must expose all three role plugins."
+foreach ($role in $rolePluginNames) {
+    $entry = @($marketplace.plugins | Where-Object { $_.name -eq $role })
+    Assert-True ($entry.Count -eq 1) "Desktop marketplace must expose $role exactly once."
+    Assert-True ($entry[0].source.path -eq "./.plugin-build/$role") "$role marketplace source must use its generated self-contained root."
+    Assert-True ($entry[0].policy.installation -eq "AVAILABLE") "$role plugin must be available for explicit installation."
+    Assert-True ($entry[0].interface.displayName -eq (Get-Culture).TextInfo.ToTitleCase($role)) "$role marketplace display name is invalid."
+
+    $pluginManifest = Get-Content (Join-Path $packageRoot "plugins\$role\plugin.json") -Raw | ConvertFrom-Json
+    Assert-True ($pluginManifest.'$schema' -eq "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json") "$role plugin must use the portable plugin schema."
+    Assert-True ($pluginManifest.name -eq $role -and $pluginManifest.version -eq "1.2.0") "$role plugin identity or version is invalid."
+    Assert-True ($pluginManifest.extensions.'com.openai'.interface.displayName -eq (Get-Culture).TextInfo.ToTitleCase($role)) "$role plugin display name is invalid."
+    Assert-True ($pluginManifest.description -match ("(?i)@" + [regex]::Escape($role))) "$role plugin description must support direct mention selection."
+    Assert-True (-not $pluginManifest.extensions.'com.openai'.interface.PSObject.Properties['defaultPrompt']) "$role plugin must not define a default prompt."
+    Assert-True (-not $pluginManifest.PSObject.Properties['model']) "$role plugin must leave model selection to the host."
+    Assert-True (-not $pluginManifest.mcpServers -and -not $pluginManifest.extensions.'com.openai'.hooks) "$role plugin must not add servers or hooks."
+
+    $roleMetadata = Get-Content (Join-Path $packageRoot "skills\$role\agents\openai.yaml") -Raw
+    Assert-True ($roleMetadata -match ('(?m)^  display_name: "' + (Get-Culture).TextInfo.ToTitleCase($role) + '"$')) "$role skill metadata display name is invalid."
+    Assert-True ($roleMetadata -match '(?m)^  allow_implicit_invocation: true$') "$role skill must allow direct role-mention invocation."
+}
+
 foreach ($leadName in @("edith", "jarvis", "ultron")) {
     foreach ($sourcePath in @("agents\$leadName.toml", "profiles\$leadName.config.toml", "instructions\$leadName.md")) {
         $content = Get-Content (Join-Path $packageRoot $sourcePath) -Raw
@@ -259,6 +283,15 @@ Assert-True ($readme -match 'browser@openai-bundled') "README must document the 
 Assert-True ($readme -match 'CODEX_ULTRON_LIVE_SEARCH=false ./scripts/start-ultron\.sh') "README must document the POSIX live-search opt-out."
 Assert-True ($readme -match 'CODEX_ULTRON_FULL_ACCESS=false ./scripts/start-ultron\.sh') "README must document the POSIX restricted-access opt-out."
 Assert-True ($readme -match 'danger-full-access') "README must document the full-access default."
+Assert-True ($readme -match '@ultron.*@jarvis.*@edith' -and $readme -match 'No activation sentence or terminal command') "README must document direct role mentions without an activation sentence or command."
+Assert-True ($readme -match 'current chat model') "README must explain that role selection keeps the current chat model."
+Assert-True ($readme -match 'Restart Codex once only if') "README must limit restart guidance to stale plugin discovery."
+Assert-True ($readme -notmatch 'Ultron for Codex|starting prompts|\$codex-ultron') "README contains obsolete combined-plugin role instructions."
+$repositoryReadme = Get-Content (Join-Path $packageRoot "..\README.md") -Raw
+Assert-True ($repositoryReadme -match '@ultron.*@jarvis.*@edith' -and $repositoryReadme -match 'No activation sentence or terminal command') "Repository README must document direct role mentions without an activation sentence or command."
+Assert-True ($repositoryReadme -match 'current chat model') "Repository README must explain that role selection keeps the current chat model."
+Assert-True ($repositoryReadme -match 'Restart Codex once only if') "Repository README must limit restart guidance to stale plugin discovery."
+Assert-True ($repositoryReadme -notmatch 'Ultron for Codex|starting prompts|\$codex-ultron') "Repository README contains obsolete combined-plugin role instructions."
 
 $launchers = @{
     "start-edith.ps1" = @("edith", "gpt-6-luna", "xhigh")
@@ -518,6 +551,13 @@ try {
     & (Join-Path $PSScriptRoot "install.ps1") -Scope Project -ProjectPath $tempProject
     Assert-True (-not (Test-Path $staleProjectAgent)) "Repeat project install must remove stale managed agents."
     Assert-True ((Get-Content $projectConfig -Raw).Trim() -eq 'model = "user-owned"') "Repeat project install must preserve config.toml."
+
+    $nativeOnlyHome = Join-Path $tempRoot "native-only-home"
+    $env:CODEX_HOME = Join-Path $nativeOnlyHome ".codex"
+    & (Join-Path $PSScriptRoot "install.ps1") -HomePath $nativeOnlyHome -SkipSkill
+    Assert-True (Test-Path (Join-Path $env:CODEX_HOME "agents\sol_worker.toml")) "Native-only install must retain Sol worker routing."
+    Assert-True (Test-Path (Join-Path $env:CODEX_HOME "ultron.config.toml")) "Native-only install must retain lead profiles."
+    Assert-True (-not (Test-Path (Join-Path $nativeOnlyHome ".agents\skills\codex-ultron\SKILL.md"))) "Native-only install must not duplicate the plugin skill."
 
     $env:CODEX_HOME = Join-Path $tempHome ".codex"
     if ($null -ne (Get-Command codex -ErrorAction SilentlyContinue)) {

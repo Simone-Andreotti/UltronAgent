@@ -1,0 +1,53 @@
+{
+  "name": "ultron-codex",
+  "interface": {
+    "displayName": "Ultron Codex Plugins"
+  },
+  "plugins": [
+    {
+      "name": "ultron",
+      "source": {
+        "source": "local",
+        "path": "./.plugin-build/ultron"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "interface": {
+        "displayName": "Ultron"
+      },
+      "category": "Developer Tools"
+    },
+    {
+      "name": "jarvis",
+      "source": {
+        "source": "local",
+        "path": "./.plugin-build/jarvis"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "interface": {
+        "displayName": "Jarvis"
+      },
+      "category": "Developer Tools"
+    },
+    {
+      "name": "edith",
+      "source": {
+        "source": "local",
+        "path": "./.plugin-build/edith"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "interface": {
+        "displayName": "Edith"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

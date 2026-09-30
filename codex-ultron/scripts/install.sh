@@ -4,9 +4,10 @@ set -eu
 scope="user"
 project_path="$PWD"
 force="false"
+skip_skill="false"
 
 usage() {
-    printf '%s\n' "Usage: $0 [--scope user|project] [--project-path PATH] [--force]"
+    printf '%s\n' "Usage: $0 [--scope user|project] [--project-path PATH] [--skip-skill] [--force]"
 }
 
 while [ "$#" -gt 0 ]; do
@@ -23,6 +24,10 @@ while [ "$#" -gt 0 ]; do
             ;;
         --force)
             force="true"
+            shift
+            ;;
+        --skip-skill)
+            skip_skill="true"
             shift
             ;;
         -h|--help)
@@ -155,8 +160,10 @@ else
     validate_marker "$config_root/$config_marker_name"
 fi
 
-check_destination "$skill_root/SKILL.md" "$skill_identifies_package"
-check_destination "$skill_root/agents/openai.yaml" "$skill_identifies_package"
+if [ "$skip_skill" = "false" ]; then
+    check_destination "$skill_root/SKILL.md" "$skill_identifies_package"
+    check_destination "$skill_root/agents/openai.yaml" "$skill_identifies_package"
+fi
 for source_agent in "$package_root"/agents/*.toml; do
     agent_name=$(basename -- "$source_agent")
     managed="false"
@@ -183,7 +190,7 @@ else
     check_destination "$config_root/codex-ultron.example.toml" "$managed"
 fi
 
-if { [ "$skill_identifies_package" = "true" ] || [ "$force" = "true" ]; } && [ -d "$skill_root" ]; then
+if [ "$skip_skill" = "false" ] && { [ "$skill_identifies_package" = "true" ] || [ "$force" = "true" ]; } && [ -d "$skill_root" ]; then
     rm -rf "$skill_root"
 fi
 remove_managed_files "$agent_root" "$agent_marker_name"
@@ -193,8 +200,10 @@ else
     remove_managed_files "$config_root" "$config_marker_name"
 fi
 
-copy_package_file "$package_root/skills/codex-ultron/SKILL.md" "$skill_root/SKILL.md"
-copy_package_file "$package_root/skills/codex-ultron/agents/openai.yaml" "$skill_root/agents/openai.yaml"
+if [ "$skip_skill" = "false" ]; then
+    copy_package_file "$package_root/skills/codex-ultron/SKILL.md" "$skill_root/SKILL.md"
+    copy_package_file "$package_root/skills/codex-ultron/agents/openai.yaml" "$skill_root/agents/openai.yaml"
+fi
 for source_agent in "$package_root"/agents/*.toml; do
     copy_package_file "$source_agent" "$agent_root/$(basename -- "$source_agent")"
 done

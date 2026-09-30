@@ -13,3 +13,4 @@ Thumbs.db
 .env.*
 !.env.example
 *.log
+codex-ultron/.plugin-build/

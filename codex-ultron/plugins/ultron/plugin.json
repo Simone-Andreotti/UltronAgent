@@ -1,0 +1,19 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "ultron",
+  "version": "1.2.0",
+  "description": "Activate the Ultron lead workflow when the user selects or mentions @Ultron.",
+  "author": {
+    "name": "Simone Andreotti"
+  },
+  "keywords": ["ultron", "orchestration", "lead"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Ultron",
+        "shortDescription": "Lead complex architecture and difficult work",
+        "longDescription": "Activate Ultron when selected or mentioned by name. Role selection keeps the current chat model and preserves native worker routing."
+      }
+    }
+  }
+}

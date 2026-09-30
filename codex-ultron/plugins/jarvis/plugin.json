@@ -1,0 +1,19 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "jarvis",
+  "version": "1.2.0",
+  "description": "Activate the Jarvis lead workflow when the user selects or mentions @Jarvis.",
+  "author": {
+    "name": "Simone Andreotti"
+  },
+  "keywords": ["jarvis", "orchestration", "lead"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Jarvis",
+        "shortDescription": "Lead implementation and integration",
+        "longDescription": "Activate Jarvis when selected or mentioned by name. Role selection keeps the current chat model and preserves native worker routing."
+      }
+    }
+  }
+}

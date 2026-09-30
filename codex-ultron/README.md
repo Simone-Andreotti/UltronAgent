@@ -26,6 +26,24 @@ Profiles, lead agents, project config, and desktop launchers enable `browser@ope
 
 ## Install
 
+For the Codex desktop app, install the plugin and native agents together:
+
+```powershell
+.\scripts\install-plugin.ps1
+```
+
+```sh
+sh scripts/install-plugin.sh
+```
+
+This registers the `ultron-codex` marketplace and installs the **Ultron**, **Jarvis**, and **Edith** plugins. In the chat composer, type `@ultron`, `@jarvis`, or `@edith`, select the matching plugin, and describe your task in the same message. No activation sentence or terminal command is needed. The selected lead stays active for follow-up messages until you choose another, and plugin selection keeps the current chat model. Restart Codex once only if the plugins do not appear.
+
+Each plugin bundles one role skill and its local references, with no default prompt, MCP server, credentials, or hooks. Repeat installation refreshes all three plugins and removes the old combined plugin after all three install successfully. The installer removes only the managed standalone skill files after plugin installation succeeds and preserves unrelated additions.
+
+A plugin improves discovery, installation, and enable/disable controls; it does not replace Codex's native model-specific agent configuration. Native agents and profiles are installed by the existing installer with `-SkipSkill` / `--skip-skill`. The plugin still contains a skill as its instruction component. Disabling or uninstalling the plugin stops that workflow's discovery; native agents and profiles remain available to the launchers. Selecting the plugin cannot change an already-running chat's model; use the lead launchers for deterministic model selection. See [official plugin packaging](https://developers.openai.com/plugins/build/plugins) and [native custom agents](https://learn.chatgpt.com/docs/agent-configuration/subagents).
+
+For a standalone skill without the plugin, use the manual installers below.
+
 Windows user installation:
 
 ```powershell
@@ -94,7 +112,7 @@ codex --profile ultron --model gpt-6.1-sol
 codex --profile jarvis --model gpt-6.1-sol
 ```
 
-Codex CLI has no native `--agent` primary-session switch. Launcher `-Agent`/`--agent` selects one of these profiles; standalone agent TOMLs apply when Codex selects a custom agent through its native subagent workflow. Mentioning `$codex-ultron` cannot replace the model of an already-running thread, and model, plugin, browser, and network availability still depend on the installed Codex runtime and host policy.
+Codex CLI has no native `--agent` primary-session switch. Launcher `-Agent`/`--agent` selects one of these profiles; standalone agent TOMLs apply when Codex selects a custom agent through its native subagent workflow. Model, plugin, browser, and network availability still depend on the installed Codex runtime and host policy.
 
 CLI launchers enable live search and full access by default. Disable search or opt into an explicit restricted workspace session with:
 
@@ -112,11 +130,13 @@ CODEX_ULTRON_FULL_ACCESS=false ./scripts/start-ultron.sh
 
 Each CLI launcher prints the selected lead's exact startup greeting before invoking Codex. This handshake is emitted by the launcher rather than left to model response timing, so it remains visible even when the first model response is only the configured completion status.
 
-In any Codex CLI session, mention `$codex-ultron` to invoke the shared workflow explicitly.
+Use the CLI lead launchers above when you want to start a Codex CLI session with the shared workflow and a selected lead.
 
 ## Desktop App
 
-Install user scope, then use the unified launcher to choose a lead and open a workspace. Codex does not currently expose a native primary custom-agent picker for `codex app`; the launcher is the supported choice layer.
+Type `@ultron`, `@jarvis`, or `@edith` in the chat composer, select the matching plugin, and describe your task in the same message. No activation sentence or terminal command is needed. The selected role remains active for follow-up messages until you choose another. Plugin selection keeps the current chat model; choose the desired model in Codex's model selector when needed. Native delegated workers retain their configured models.
+
+The launchers below remain available when you want to open a workspace with a deterministic lead profile and model.
 
 Windows:
 
@@ -138,7 +158,7 @@ Linux or macOS:
 ./scripts/start-edith-app.sh /path/to/repo
 ```
 
-The launcher passes the selected model, role-specific reasoning, low verbosity, live search, full-access (or explicit restricted) execution, Browser plugin enablement, and matching lead instructions while opening the desktop workspace. Codex accepts `--profile` for runtime CLI commands but not `codex app`, so desktop launchers inject the equivalent settings explicitly. In the desktop skill picker, `Codex Ultron` provides the same orchestration workflow. Agent activity appears as inspectable subagent threads.
+The launcher passes the selected model, role-specific reasoning, low verbosity, live search, full-access (or explicit restricted) execution, Browser plugin enablement, and matching lead instructions while opening the desktop workspace. Codex accepts `--profile` for runtime CLI commands but not `codex app`, so desktop launchers inject the equivalent settings explicitly. Agent activity appears as inspectable subagent threads.
 
 ## Package Layout
 

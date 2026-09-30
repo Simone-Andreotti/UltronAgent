@@ -36,6 +36,14 @@ For a native Copilot CLI plugin install or upgrade, use the replacement installe
 .\copilot-ultron\scripts\install-plugin.ps1
 ```
 
+For the Codex desktop app, use its plugin installer instead of the standalone-skill installer:
+
+```powershell
+.\codex-ultron\scripts\install-plugin.ps1
+```
+
+It installs the **Ultron**, **Jarvis**, and **Edith** plugins and retains native model-specific agents and lead profiles. In the chat composer, type `@ultron`, `@jarvis`, or `@edith`, select that role's plugin, and describe your task in the same message. No activation sentence or terminal command is needed, and the selected lead stays active for follow-up messages. Restart Codex once only if the plugins do not appear. Plugin selection keeps the current chat model; native lead launchers still choose a deterministic model.
+
 Project installation:
 
 ```powershell
@@ -62,6 +70,12 @@ Native Copilot CLI plugin install or upgrade:
 sh ./copilot-ultron/scripts/install-plugin.sh
 ```
 
+Codex desktop plugin install or upgrade:
+
+```sh
+sh ./codex-ultron/scripts/install-plugin.sh
+```
+
 Project installation:
 
 ```sh
@@ -82,6 +96,12 @@ Run the package checks from the repository root:
 ```powershell
 .\codex-ultron\scripts\test-package.ps1
 .\copilot-ultron\scripts\test-package.ps1
+```
+
+The Codex plugin's offline runtime check uses the installed Codex CLI and Python 3.11+:
+
+```powershell
+python .\codex-ultron\scripts\test-plugin.py
 ```
 
 Repository implementation checklists live in `tasks/plans/`; they document development work and are not copied by either package installer.
