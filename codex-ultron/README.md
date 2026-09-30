@@ -8,8 +8,8 @@ Use `luna_code_analyst` for bounded code analysis and `luna_researcher` for rese
 
 - Ultron: `gpt-6.1-sol`, high reasoning
 - Jarvis: `gpt-6.1-sol`, high reasoning
-- Edith: `gpt-6-luna`, maximum (`xhigh`) reasoning
-- Every Luna subagent: `gpt-6-luna`, maximum (`xhigh`) reasoning
+- Edith: `gpt-6-luna`, maximum (`max`) reasoning
+- Every Luna subagent: `gpt-6-luna`, maximum (`max`) reasoning
 - Ultron-only Astra specialist: `gpt-6-astra`, high reasoning
 
 The CLI and desktop launchers select the requested lead profile and model automatically. Custom Luna agent files select their own model automatically when spawned. Generic Codex chats do not permit a skill to replace the model of an already-running thread, so use the matching launcher when deterministic lead routing matters.

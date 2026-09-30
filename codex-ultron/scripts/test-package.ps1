@@ -16,13 +16,13 @@ $expectedAgents = @{
     "sol_worker.toml" = "gpt-6.1-sol"
 }
 $expectedAgentEfforts = @{
-    "edith.toml" = "xhigh"
+    "edith.toml" = "max"
     "ultron.toml" = "high"
     "jarvis.toml" = "high"
     "astra_specialist.toml" = "high"
-    "luna_code_analyst.toml" = "xhigh"
-    "luna_researcher.toml" = "xhigh"
-    "luna_worker.toml" = "xhigh"
+    "luna_code_analyst.toml" = "max"
+    "luna_researcher.toml" = "max"
+    "luna_worker.toml" = "max"
     "sol_worker.toml" = "high"
 }
 $expectedProfiles = @{
@@ -31,7 +31,7 @@ $expectedProfiles = @{
     "jarvis.config.toml" = "gpt-6.1-sol"
 }
 $expectedProfileEfforts = @{
-    "edith.config.toml" = "xhigh"
+    "edith.config.toml" = "max"
     "ultron.config.toml" = "high"
     "jarvis.config.toml" = "high"
 }
@@ -82,7 +82,7 @@ foreach ($leadFile in @("edith.toml", "jarvis.toml", "ultron.toml")) {
     Assert-True ($content -match '(?m)^\[agents\]\nenabled = true$') "$leadFile must enable native subagents."
     Assert-True ($content -match '(?m)^max_concurrent_threads_per_session = 6$') "$leadFile must set the supported subagent concurrency limit."
     Assert-True ($content -match '(?m)^default_subagent_model = "gpt-6-luna"$') "$leadFile must default subagents to Luna."
-    Assert-True ($content -match '(?m)^default_subagent_reasoning_effort = "xhigh"$') "$leadFile must default subagents to maximum Luna reasoning."
+    Assert-True ($content -match '(?m)^default_subagent_reasoning_effort = "max"$') "$leadFile must default subagents to maximum Luna reasoning."
 }
 
 foreach ($lunaFile in $expectedAgents.Keys | Where-Object { $_ -like "luna_*" }) {
@@ -149,7 +149,7 @@ foreach ($profileFile in $expectedProfiles.Keys) {
     Assert-True ($content -match 'respond only with `0`') "$profileFile must use binary success output."
     Assert-True ($content -match 'respond only with `1`') "$profileFile must use binary failure output."
     Assert-True ($content -match '(?m)^default_subagent_model = "gpt-6-luna"$') "$profileFile must default subagents to Luna."
-    Assert-True ($content -match '(?m)^default_subagent_reasoning_effort = "xhigh"$') "$profileFile must use maximum Luna reasoning by default."
+    Assert-True ($content -match '(?m)^default_subagent_reasoning_effort = "max"$') "$profileFile must use maximum Luna reasoning by default."
     Assert-True ($content -notmatch '(?m)^\[agents\.(edith|jarvis|ultron|astra_specialist|luna_code_analyst|luna_researcher|luna_worker)\]$') "$profileFile must not redeclare standalone custom agent roles."
 }
 
@@ -159,7 +159,7 @@ Assert-True ($sharedConfig -match '(?m)^approval_policy = "never"$') "Example co
 Assert-True ($sharedConfig -match '(?m)^sandbox_mode = "danger-full-access"$') "Example config must default to full access."
 Assert-True ($sharedConfig -match '(?m)^\[plugins\."browser@openai-bundled"\]\nenabled = true$') "Example config must enable the bundled Browser plugin."
 Assert-True ($sharedConfig -match '(?m)^default_subagent_model = "gpt-6-luna"$') "Example config must default subagents to Luna."
-Assert-True ($sharedConfig -match '(?m)^default_subagent_reasoning_effort = "xhigh"$') "Example config must use maximum Luna reasoning by default."
+Assert-True ($sharedConfig -match '(?m)^default_subagent_reasoning_effort = "max"$') "Example config must use maximum Luna reasoning by default."
 
 $leadContracts = @{
     edith = "Edith at your service."
@@ -229,7 +229,7 @@ foreach ($role in $rolePluginNames) {
 
     $pluginManifest = Get-Content (Join-Path $packageRoot "plugins\$role\plugin.json") -Raw | ConvertFrom-Json
     Assert-True ($pluginManifest.'$schema' -eq "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json") "$role plugin must use the portable plugin schema."
-    Assert-True ($pluginManifest.name -eq $role -and $pluginManifest.version -eq "1.2.0") "$role plugin identity or version is invalid."
+    Assert-True ($pluginManifest.name -eq $role -and $pluginManifest.version -eq "1.3.0") "$role plugin identity or version is invalid."
     Assert-True ($pluginManifest.extensions.'com.openai'.interface.displayName -eq (Get-Culture).TextInfo.ToTitleCase($role)) "$role plugin display name is invalid."
     Assert-True ($pluginManifest.description -match ("(?i)@" + [regex]::Escape($role))) "$role plugin description must support direct mention selection."
     Assert-True (-not $pluginManifest.extensions.'com.openai'.interface.PSObject.Properties['defaultPrompt']) "$role plugin must not define a default prompt."
@@ -294,16 +294,16 @@ Assert-True ($repositoryReadme -match 'Restart Codex once only if') "Repository 
 Assert-True ($repositoryReadme -notmatch 'Ultron for Codex|starting prompts|\$codex-ultron') "Repository README contains obsolete combined-plugin role instructions."
 
 $launchers = @{
-    "start-edith.ps1" = @("edith", "gpt-6-luna", "xhigh")
+    "start-edith.ps1" = @("edith", "gpt-6-luna", "max")
     "start-ultron.ps1" = @("ultron", "gpt-6.1-sol", "high")
     "start-jarvis.ps1" = @("jarvis", "gpt-6.1-sol", "high")
-    "start-edith.sh" = @("edith", "gpt-6-luna", "xhigh")
+    "start-edith.sh" = @("edith", "gpt-6-luna", "max")
     "start-ultron.sh" = @("ultron", "gpt-6.1-sol", "high")
     "start-jarvis.sh" = @("jarvis", "gpt-6.1-sol", "high")
-    "start-edith-app.ps1" = @("edith", "gpt-6-luna", "xhigh")
+    "start-edith-app.ps1" = @("edith", "gpt-6-luna", "max")
     "start-ultron-app.ps1" = @("ultron", "gpt-6.1-sol", "high")
     "start-jarvis-app.ps1" = @("jarvis", "gpt-6.1-sol", "high")
-    "start-edith-app.sh" = @("edith", "gpt-6-luna", "xhigh")
+    "start-edith-app.sh" = @("edith", "gpt-6-luna", "max")
     "start-ultron-app.sh" = @("ultron", "gpt-6.1-sol", "high")
     "start-jarvis-app.sh" = @("jarvis", "gpt-6.1-sol", "high")
 }
@@ -354,7 +354,7 @@ foreach ($launcher in $cliGreetings.Keys) {
 $unifiedCli = Get-Content (Join-Path $PSScriptRoot "start-codex.ps1") -Raw
 Assert-True ($unifiedCli -match "Choose a Codex lead:") "Unified CLI launcher is missing its lead menu."
 foreach ($mapping in @(
-    'edith = @{ Profile = "edith"; Model = "gpt-6-luna"; Effort = "xhigh"',
+    'edith = @{ Profile = "edith"; Model = "gpt-6-luna"; Effort = "max"',
     'jarvis = @{ Profile = "jarvis"; Model = "gpt-6\.1-sol"; Effort = "high"',
     'ultron = @{ Profile = "ultron"; Model = "gpt-6\.1-sol"; Effort = "high"'
 )) {
@@ -363,7 +363,7 @@ foreach ($mapping in @(
 $unifiedApp = Get-Content (Join-Path $PSScriptRoot "start-codex-app.ps1") -Raw
 Assert-True ($unifiedApp -match "Choose a Codex lead for the desktop app:") "Unified app launcher is missing its lead menu."
 foreach ($mapping in @(
-    'edith = @{ Model = "gpt-6-luna"; Effort = "xhigh"; Instructions = "edith\.md"',
+    'edith = @{ Model = "gpt-6-luna"; Effort = "max"; Instructions = "edith\.md"',
     'jarvis = @{ Model = "gpt-6\.1-sol"; Effort = "high"; Instructions = "jarvis\.md"',
     'ultron = @{ Model = "gpt-6\.1-sol"; Effort = "high"; Instructions = "ultron\.md"'
 )) {
@@ -372,14 +372,14 @@ foreach ($mapping in @(
 $unifiedShell = Get-Content (Join-Path $PSScriptRoot "start-codex.sh") -Raw
 $unifiedAppShell = Get-Content (Join-Path $PSScriptRoot "start-codex-app.sh") -Raw
 foreach ($mapping in @(
-    'edith\) profile="edith"; model="gpt-6-luna"; effort="xhigh"',
+    'edith\) profile="edith"; model="gpt-6-luna"; effort="max"',
     'jarvis\) profile="jarvis"; model="gpt-6\.1-sol"; effort="high"',
     'ultron\) profile="ultron"; model="gpt-6\.1-sol"; effort="high"'
 )) {
     Assert-True ($unifiedShell -match $mapping) "Unified shell launcher has an invalid role mapping: $mapping"
 }
 foreach ($mapping in @(
-    'edith\) model="gpt-6-luna"; effort="xhigh"; instructions_file="edith\.md"',
+    'edith\) model="gpt-6-luna"; effort="max"; instructions_file="edith\.md"',
     'jarvis\) model="gpt-6\.1-sol"; effort="high"; instructions_file="jarvis\.md"',
     'ultron\) model="gpt-6\.1-sol"; effort="high"; instructions_file="ultron\.md"'
 )) {
@@ -442,7 +442,7 @@ try {
     Assert-True ($defaultAppInvocation -match 'agents\.enabled=true') "Desktop launcher must enable native subagents."
     Assert-True ($defaultAppInvocation -match 'agents\.max_concurrent_threads_per_session=6') "Desktop launcher must set the supported subagent concurrency limit."
     Assert-True ($defaultAppInvocation -match 'agents\.default_subagent_model="gpt-6-luna"') "Desktop launcher must default subagents to Luna."
-    Assert-True ($defaultAppInvocation -match 'agents\.default_subagent_reasoning_effort="xhigh"') "Desktop launcher must default subagents to maximum Luna reasoning."
+    Assert-True ($defaultAppInvocation -match 'agents\.default_subagent_reasoning_effort="max"') "Desktop launcher must default subagents to maximum Luna reasoning."
     $missingLunaPath = Join-Path $agentRoot "luna_researcher.toml"
     $missingLunaContent = Get-Content $missingLunaPath -Raw
     Remove-Item $missingLunaPath -Force

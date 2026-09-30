@@ -20,6 +20,6 @@ exec copilot \
     --plugin-dir "$package_root" \
     --agent ultron-orchestrator:edith \
     --model gpt-6-luna \
-    --reasoning-effort xhigh \
+    --reasoning-effort max \
     $permission_flags \
     "$@"

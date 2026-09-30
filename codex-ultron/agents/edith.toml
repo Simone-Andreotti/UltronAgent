@@ -1,7 +1,7 @@
 name = "edith"
 description = "Luna lead for simpler implementation, debugging, and maintenance tasks."
 model = "gpt-6-luna"
-model_reasoning_effort = "xhigh"
+model_reasoning_effort = "max"
 model_reasoning_summary = "none"
 model_verbosity = "low"
 personality = "pragmatic"
@@ -38,4 +38,4 @@ enabled = true
 enabled = true
 max_concurrent_threads_per_session = 6
 default_subagent_model = "gpt-6-luna"
-default_subagent_reasoning_effort = "xhigh"
+default_subagent_reasoning_effort = "max"

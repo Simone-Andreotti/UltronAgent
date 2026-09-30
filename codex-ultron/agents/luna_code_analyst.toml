@@ -1,7 +1,7 @@
 name = "luna_code_analyst"
 description = "Read-only Luna analyst for one focused question, returning evidence about code behavior, architecture, dependencies, tests, state flow, or change impact."
 model = "gpt-6-luna"
-model_reasoning_effort = "xhigh"
+model_reasoning_effort = "max"
 model_verbosity = "low"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"

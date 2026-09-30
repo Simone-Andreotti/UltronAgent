@@ -1,7 +1,7 @@
 {
   "name": "ultron-orchestrator",
   "description": "Ultron, Jarvis, and Edith orchestration leads with bounded Luna analysis, research, and implementation subagents.",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "keywords": [
     "orchestration",
     "ultron",

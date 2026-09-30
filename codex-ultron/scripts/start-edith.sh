@@ -20,4 +20,4 @@ sandbox_mode_args=
 [ "${CODEX_ULTRON_FULL_ACCESS:-true}" = "false" ] && { full_access_flag=; sandbox_mode_args='--config sandbox_mode="workspace-write"'; }
 
 printf '%s\n' "Edith at your service."
-exec codex --profile edith --model gpt-6-luna --config 'model_reasoning_effort="xhigh"' $live_search_flag $full_access_flag $sandbox_mode_args "$@"
+exec codex --profile edith --model gpt-6-luna --config 'model_reasoning_effort="max"' $live_search_flag $full_access_flag $sandbox_mode_args "$@"

@@ -20,10 +20,10 @@ $expectedAgents = @(
 $expectedEfforts = @{
     "ultron" = "high"
     "jarvis" = "high"
-    "edith" = "xhigh"
-    "luna-code-analyst" = "high"
-    "luna-researcher" = "medium"
-    "luna-worker" = "medium"
+    "edith" = "max"
+    "luna-code-analyst" = "max"
+    "luna-researcher" = "max"
+    "luna-worker" = "max"
     "astra-specialist" = "high"
     "sol-worker" = "high"
 }
@@ -58,7 +58,7 @@ $config = Get-Content (Join-Path $packageRoot "config\copilot-config.example.jso
 Assert-True ($manifest.agents -eq "agents/") "Manifest agents path must be agents/."
 Assert-True ($manifest.skills -eq "skills/") "Manifest skills path must be skills/."
 Assert-True ($manifest.mcpServers -eq ".mcp.json") "Manifest must expose the Playwright MCP fallback."
-Assert-True ($manifest.version -eq "1.4.0") "Manifest version must match the current package release."
+Assert-True ($manifest.version -eq "1.5.0") "Manifest version must match the current package release."
 Assert-True ($marketplace.name -eq "ultron-agent") "Marketplace name is invalid."
 Assert-True ($marketplace.metadata.version -eq $manifest.version) "Marketplace metadata version must match the plugin manifest."
 Assert-True ($marketplace.plugins.Count -eq 1) "Marketplace must publish exactly one plugin."
@@ -156,7 +156,7 @@ foreach ($leadName in @("ultron", "jarvis", "edith")) {
     Assert-True ($content -match "Never parallelize dependent work or overlapping writers") "$leadName must restrict unsafe parallel work."
     Assert-True ($content -match "exactly one detailed, narrowly scoped task") "$leadName must provide one narrow task per subagent."
     Assert-True ($content -match "cannot spawn or delegate to another agent") "$leadName must forbid recursive delegation."
-    Assert-True ($content -match "(Luna code|Code) analysis uses high reasoning; research and implementation use medium reasoning") "$leadName must route Luna reasoning by role."
+    Assert-True ($content -match 'gpt-6-luna` with maximum \(`max`\) reasoning') "$leadName must route every Luna role to maximum reasoning."
     Assert-True ($content -match "normally one") "$leadName must use the minimum worker count by default."
     Assert-True ($content -match "plan milestone names exactly one (Luna|worker) role, worker count, owned scope, dependencies, executable check, and escalation condition") "$leadName plan milestones need complete role contracts."
     Assert-True ($content -match "repeat the browser check") "$leadName must require browser revalidation."
@@ -259,7 +259,7 @@ Assert-True ($packagedSkill -match "multiple subagents in one parallel batch") "
 Assert-True ($packagedSkill -match "exactly one detailed, narrowly scoped task") "Orchestrator skill must enforce one narrow task per subagent."
 Assert-True ($packagedSkill -match "Subagents never orchestrate, spawn agents") "Orchestrator skill must forbid recursive delegation."
 Assert-True ($packagedSkill -match "Engineering Quality") "Orchestrator skill must preserve engineering quality."
-Assert-True ($packagedSkill -match "use high reasoning for code analysis and medium reasoning for research and implementation") "Orchestrator skill must route Luna reasoning by role."
+Assert-True ($packagedSkill -match 'maximum \(`max`\) reasoning for Edith and every Luna role') "Orchestrator skill must route every Luna role to maximum reasoning."
 Assert-True ($packagedSkill -match "available browser or Playwright tools") "Orchestrator skill must require browser validation when applicable."
 Assert-True ($packagedSkill -match "## Explain Mode") "Orchestrator skill is missing explain mode guidance."
 Assert-True ($packagedSkill -match "normally one") "Orchestrator skill must use the minimum worker count."
@@ -291,10 +291,10 @@ foreach ($nativeAgent in $nativeAgents.Keys) {
     Assert-True ($content -match ('(?m)^model = "' + [regex]::Escape($nativeAgents[$nativeAgent]) + '"\r?$')) "Invalid native model in $nativeAgent."
 }
 $launchers = @{
-    "start-edith.ps1" = @{ Model = "gpt-6-luna"; Effort = "xhigh" }
+    "start-edith.ps1" = @{ Model = "gpt-6-luna"; Effort = "max" }
     "start-ultron.ps1" = @{ Model = "gpt-6.1-sol"; Effort = "high" }
     "start-jarvis.ps1" = @{ Model = "gpt-6.1-sol"; Effort = "high" }
-    "start-edith.sh" = @{ Model = "gpt-6-luna"; Effort = "xhigh" }
+    "start-edith.sh" = @{ Model = "gpt-6-luna"; Effort = "max" }
     "start-ultron.sh" = @{ Model = "gpt-6.1-sol"; Effort = "high" }
     "start-jarvis.sh" = @{ Model = "gpt-6.1-sol"; Effort = "high" }
 }
@@ -377,7 +377,7 @@ $readme = Get-Content (Join-Path $packageRoot "README.md") -Raw
 Assert-True ($readme -match 'Ultron and Jarvis request `gpt-6\.1-sol` with high reasoning') "README must document Ultron model routing."
 Assert-True ($readme -match 'Ultron alone may invoke `astra-specialist`') "README must document Astra specialist routing."
 Assert-True ($readme -match 'Ultron and Jarvis request `gpt-6\.1-sol` with high reasoning') "README must document Jarvis model routing."
-Assert-True ($readme -match 'Edith requests `gpt-6-luna` with maximum \(`xhigh`\) reasoning') "README must document Edith model routing."
+Assert-True ($readme -match 'Edith and every Luna role request `gpt-6-luna` with maximum \(`max`\) reasoning') "README must document Edith model routing."
 Assert-True ($readme -match 'canonical `playwright/\*` namespace') "README must document the canonical Playwright namespace."
 Assert-True ($readme -match '@mcp playwright') "README must document the VS Code Playwright MCP installation."
 Assert-True ($readme -match '@playwright/mcp@0\.0\.79') "README must document the pinned Playwright MCP fallback."

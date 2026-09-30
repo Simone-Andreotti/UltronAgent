@@ -46,7 +46,7 @@ Use `luna_code_analyst` for bounded code analysis and `luna_researcher` for rese
 
 ## Model Policy
 
-Ultron and Jarvis use `gpt-6.1-sol` with high reasoning; Edith uses `gpt-6-luna` with maximum (`xhigh`) reasoning. Every Luna role stays on `gpt-6-luna` with maximum (`xhigh`) reasoning. Ultron alone may delegate qualifying work to `astra_specialist`, which uses `gpt-6-astra` with high reasoning. All roles enable live web search and the bundled Browser plugin; standalone analyst/researcher contracts remain read-only despite full runtime capability. Profiles and launchers select lead models; standalone agent TOMLs own child routing. Selecting a role through the plugin activates its instructions in the current chat; the host retains control of that chat's model, reasoning effort, permissions, and tools.
+Ultron and Jarvis use `gpt-6.1-sol` with high reasoning; Edith uses `gpt-6-luna` with maximum (`max`) reasoning. Every Luna role stays on `gpt-6-luna` with maximum (`max`) reasoning. Ultron alone may delegate qualifying work to `astra_specialist`, which uses `gpt-6-astra` with high reasoning. All roles enable live web search and the bundled Browser plugin; standalone analyst/researcher contracts remain read-only despite full runtime capability. Profiles and launchers select lead models; standalone agent TOMLs own child routing. Selecting a role through the plugin activates its instructions in the current chat; the host retains control of that chat's model, reasoning effort, permissions, and tools.
 
 ## Engineering Principles
 

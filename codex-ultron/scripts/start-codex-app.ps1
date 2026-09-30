@@ -11,7 +11,7 @@ if ($args.Count -gt 0) {
 }
 
 $leadDefinitions = @{
-    edith = @{ Model = "gpt-6-luna"; Effort = "xhigh"; Instructions = "edith.md"; Label = "Edith" }
+    edith = @{ Model = "gpt-6-luna"; Effort = "max"; Instructions = "edith.md"; Label = "Edith" }
     jarvis = @{ Model = "gpt-6.1-sol"; Effort = "high"; Instructions = "jarvis.md"; Label = "Jarvis" }
     ultron = @{ Model = "gpt-6.1-sol"; Effort = "high"; Instructions = "ultron.md"; Label = "Ultron" }
 }
@@ -58,7 +58,7 @@ $arguments = @(
     "--config", 'agents.enabled=true',
     "--config", 'agents.max_concurrent_threads_per_session=6',
     "--config", 'agents.default_subagent_model="gpt-6-luna"',
-    "--config", 'agents.default_subagent_reasoning_effort="xhigh"',
+    "--config", 'agents.default_subagent_reasoning_effort="max"',
     "--config", "developer_instructions=$encodedInstructions",
     $WorkingDirectory
 )

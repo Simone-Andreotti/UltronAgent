@@ -6,17 +6,17 @@
     "agents": {
       "ultron-orchestrator:luna-code-analyst": {
         "model": "gpt-6-luna",
-        "effortLevel": "high",
+        "effortLevel": "max",
         "contextTier": "default"
       },
       "ultron-orchestrator:luna-researcher": {
         "model": "gpt-6-luna",
-        "effortLevel": "medium",
+        "effortLevel": "max",
         "contextTier": "default"
       },
       "ultron-orchestrator:luna-worker": {
         "model": "gpt-6-luna",
-        "effortLevel": "medium",
+        "effortLevel": "max",
         "contextTier": "default"
       },
       "ultron-orchestrator:sol-worker": {

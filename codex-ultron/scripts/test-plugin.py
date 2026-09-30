@@ -14,6 +14,7 @@ source_package = Path(__file__).resolve().parents[1]
 codex = shutil.which("codex")
 assert codex, "Codex CLI is required"
 roles = ("ultron", "jarvis", "edith")
+plugin_version = "1.3.0"
 display_names = {role: role.title() for role in roles}
 
 with tempfile.TemporaryDirectory(prefix="codex-ultron-plugin-") as temporary:
@@ -119,7 +120,7 @@ with tempfile.TemporaryDirectory(prefix="codex-ultron-plugin-") as temporary:
     assert {entry["pluginId"] for entry in plugins} == {f"{role}@ultron-codex" for role in roles}
     assert len(plugins) == 3 and all(entry["enabled"] for entry in plugins)
     assert {entry["name"] for entry in plugins} == set(roles)
-    assert all(entry["version"] == "1.2.0" for entry in plugins)
+    assert all(entry["version"] == plugin_version for entry in plugins)
 
     cache_root = codex_home / "plugins/cache/ultron-codex"
     for role in roles:
@@ -147,6 +148,20 @@ with tempfile.TemporaryDirectory(prefix="codex-ultron-plugin-") as temporary:
     for source in (package / "agents").glob("*.toml"):
         assert (codex_home / "agents" / source.name).read_bytes() == source.read_bytes()
     assert tomllib.loads((codex_home / "agents/sol_worker.toml").read_text(encoding="utf-8"))["model"] == "gpt-6.1-sol"
+
+    for role in ("edith", "luna_code_analyst", "luna_researcher", "luna_worker"):
+        agent = tomllib.loads((codex_home / "agents" / f"{role}.toml").read_text(encoding="utf-8"))
+        assert agent["model"] == "gpt-6-luna", f"Installed native role has the wrong model: {role}"
+        assert agent["model_reasoning_effort"] == "max", f"Installed native role has the wrong effort: {role}"
+
+    for role in roles:
+        profile = tomllib.loads((codex_home / f"{role}.config.toml").read_text(encoding="utf-8"))
+        agents = profile["agents"]
+        assert agents["default_subagent_model"] == "gpt-6-luna", f"Installed profile has the wrong default model: {role}"
+        assert agents["default_subagent_reasoning_effort"] == "max", f"Installed profile has the wrong default effort: {role}"
+    edith_profile = tomllib.loads((codex_home / "edith.config.toml").read_text(encoding="utf-8"))
+    assert edith_profile["model"] == "gpt-6-luna"
+    assert edith_profile["model_reasoning_effort"] == "max"
 
     process = subprocess.Popen([codex, "app-server", "--listen", "stdio://"], env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
     messages = queue.Queue()
@@ -182,8 +197,8 @@ with tempfile.TemporaryDirectory(prefix="codex-ultron-plugin-") as temporary:
             entry = entries[0]
             assert entry["enabled"] and entry["interface"]["displayName"] == display_names[role], entry
             assert not entry["interface"].get("defaultPrompt"), f"Skill list exposed a default prompt: {role}"
-            assert Path(entry["path"]).resolve() == (cache_root / role / "1.2.0" / "skills" / role / "SKILL.md").resolve()
-            metadata = cache_root / role / "1.2.0" / "skills" / role / "agents/openai.yaml"
+            assert Path(entry["path"]).resolve() == (cache_root / role / plugin_version / "skills" / role / "SKILL.md").resolve()
+            metadata = cache_root / role / plugin_version / "skills" / role / "agents/openai.yaml"
             assert re.search(r"allow_implicit_invocation:\s*true", metadata.read_text(encoding="utf-8")), role
     finally:
         process.terminate()

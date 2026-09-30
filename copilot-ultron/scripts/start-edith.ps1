@@ -20,7 +20,7 @@ $arguments = @(
     "--plugin-dir", $packageRoot,
     "--agent", "ultron-orchestrator:edith",
     "--model", "gpt-6-luna",
-    "--reasoning-effort", "xhigh",
+    "--reasoning-effort", "max",
     "-C", $WorkingDirectory
 )
 

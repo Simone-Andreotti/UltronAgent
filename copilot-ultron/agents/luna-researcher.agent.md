@@ -5,8 +5,8 @@ agents: []
 user-invocable: false
 disable-model-invocation: false
 model: gpt-6-luna
-reasoningEffort: medium
-reasoning-effort: medium
+reasoningEffort: max
+reasoning-effort: max
 ---
 
 Prefer writes in the active working folder; write elsewhere only when necessary for the assigned task and permitted by host policy. Full access does not expand the assignment or relax read-only role contracts.

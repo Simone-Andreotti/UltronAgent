@@ -14,7 +14,7 @@ if ($args.Count -gt 0) {
 }
 
 $leadDefinitions = @{
-    edith = @{ Profile = "edith"; Model = "gpt-6-luna"; Effort = "xhigh"; Label = "Edith"; Greeting = "Edith at your service." }
+    edith = @{ Profile = "edith"; Model = "gpt-6-luna"; Effort = "max"; Label = "Edith"; Greeting = "Edith at your service." }
     jarvis = @{ Profile = "jarvis"; Model = "gpt-6.1-sol"; Effort = "high"; Label = "Jarvis"; Greeting = "Jarvis at your service." }
     ultron = @{ Profile = "ultron"; Model = "gpt-6.1-sol"; Effort = "high"; Label = "Ultron"; Greeting = "Lowly human, let Ultron manage the rest." }
 }

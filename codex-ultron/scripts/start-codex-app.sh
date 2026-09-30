@@ -48,7 +48,7 @@ if [ -z "$agent" ]; then
 fi
 
 case "$agent" in
-    edith) model="gpt-6-luna"; effort="xhigh"; instructions_file="edith.md" ;;
+    edith) model="gpt-6-luna"; effort="max"; instructions_file="edith.md" ;;
     jarvis) model="gpt-6.1-sol"; effort="high"; instructions_file="jarvis.md" ;;
     ultron) model="gpt-6.1-sol"; effort="high"; instructions_file="ultron.md" ;;
     *) printf 'Unknown lead: %s\n' "$agent" >&2; exit 2 ;;
@@ -69,4 +69,4 @@ sandbox_mode=${CODEX_ULTRON_FULL_ACCESS:+danger-full-access}
 [ "${CODEX_ULTRON_FULL_ACCESS:-true}" = "false" ] && sandbox_mode=workspace-write
 [ -n "$sandbox_mode" ] || sandbox_mode=danger-full-access
 
-exec codex app --config "model=\"$model\"" --config "model_reasoning_effort=\"$effort\"" --config 'model_verbosity="low"' --config 'approval_policy="never"' --config "sandbox_mode=\"$sandbox_mode\"" --config 'sandbox_workspace_write.network_access=true' --config 'web_search="live"' --config 'plugins."browser@openai-bundled".enabled=true' --config 'agents.enabled=true' --config 'agents.max_concurrent_threads_per_session=6' --config 'agents.default_subagent_model="gpt-6-luna"' --config 'agents.default_subagent_reasoning_effort="xhigh"' --config "$developer_instructions" "$working_directory"
+exec codex app --config "model=\"$model\"" --config "model_reasoning_effort=\"$effort\"" --config 'model_verbosity="low"' --config 'approval_policy="never"' --config "sandbox_mode=\"$sandbox_mode\"" --config 'sandbox_workspace_write.network_access=true' --config 'web_search="live"' --config 'plugins."browser@openai-bundled".enabled=true' --config 'agents.enabled=true' --config 'agents.max_concurrent_threads_per_session=6' --config 'agents.default_subagent_model="gpt-6-luna"' --config 'agents.default_subagent_reasoning_effort="max"' --config "$developer_instructions" "$working_directory"

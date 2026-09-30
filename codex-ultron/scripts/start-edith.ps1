@@ -19,7 +19,7 @@ if (-not (Test-Path (Join-Path $codexHome "edith.config.toml"))) {
 $arguments = @(
     "--profile", "edith",
     "--model", "gpt-6-luna",
-    "--config", 'model_reasoning_effort="xhigh"',
+    "--config", 'model_reasoning_effort="max"',
     "--cd", $WorkingDirectory
 )
 if ($Search) { $arguments += "--search" }

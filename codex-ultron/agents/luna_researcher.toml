@@ -1,7 +1,7 @@
 name = "luna_researcher"
 description = "Read-only Luna researcher for one targeted documentation, dependency, evidence, log, or proven-pattern question."
 model = "gpt-6-luna"
-model_reasoning_effort = "xhigh"
+model_reasoning_effort = "max"
 model_verbosity = "low"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"

@@ -70,7 +70,7 @@ Use `luna-code-analyst` for bounded code analysis and `luna-researcher` for rese
 
 ## Model Policy
 
-Agent frontmatter requests `gpt-6.1-sol` with high reasoning for Ultron and Jarvis, `gpt-6-luna` with maximum (`xhigh`) reasoning for Edith, and `gpt-6-astra` with high reasoning for Ultron's `astra-specialist`. Keep every Luna role on `gpt-6-luna` and default context; use high reasoning for code analysis and medium reasoning for research and implementation. Never select Copilot Auto, another model, or long context. VS Code or CLI may substitute the active session model or effort when policy or account availability prevents the requested value.
+Agent frontmatter requests `gpt-6.1-sol` with high reasoning for Ultron and Jarvis, `gpt-6-luna` with maximum (`max`) reasoning for Edith and every Luna role, and `gpt-6-astra` with high reasoning for Ultron's `astra-specialist`. Keep every Luna role on `gpt-6-luna` and default context. Never select Copilot Auto, another model, or long context. VS Code or CLI may substitute the active session model or effort when policy or account availability prevents the requested value.
 
 ## Resources
 
