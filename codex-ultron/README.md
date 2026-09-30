@@ -2,12 +2,14 @@
 
 Portable Ultron, Jarvis, Edith, and Luna setup for Codex CLI and the Codex surface in the ChatGPT desktop app.
 
+Use `luna_code_analyst` for bounded code analysis and `luna_researcher` for research. Use `luna_worker` for testing, simple checks, simple fixes, simple implementations, and routine integration. Only Jarvis and Ultron may invoke `sol_worker` on `gpt-6.1-sol` with high reasoning for difficult implementation, including complex algorithms, 3D modeling, and similar work beyond Luna capability. Choose Sol when the required complexity is already clear; do not require a failed Luna attempt. Keep architecture decisions, orchestration, and final acceptance with the lead; standalone research, testing, and checks stay with Luna. The Sol worker may run focused validation of its own deliverable. A `sol_worker` assignment must explicitly identify Jarvis or Ultron as the caller, state why Luna is insufficient, and include owned files, preserved interfaces, acceptance criteria, required validation, and a ready plan milestone for non-trivial work. Workers cannot spawn or delegate. Edith must escalate difficult implementation to Jarvis or Ultron and must never invoke or instruct the Sol worker.
+
 ## Model Routing
 
-- Ultron: `gpt-5.6-sol`, high reasoning
-- Jarvis: `gpt-5.6-sol`, high reasoning
-- Edith: `gpt-5.6-luna`, maximum (`xhigh`) reasoning
-- Every Luna subagent: `gpt-5.6-luna`, maximum (`xhigh`) reasoning
+- Ultron: `gpt-6.1-sol`, high reasoning
+- Jarvis: `gpt-6.1-sol`, high reasoning
+- Edith: `gpt-6-luna`, maximum (`xhigh`) reasoning
+- Every Luna subagent: `gpt-6-luna`, maximum (`xhigh`) reasoning
 - Ultron-only Astra specialist: `gpt-6-astra`, high reasoning
 
 The CLI and desktop launchers select the requested lead profile and model automatically. Custom Luna agent files select their own model automatically when spawned. Generic Codex chats do not permit a skill to replace the model of an already-running thread, so use the matching launcher when deterministic lead routing matters.
@@ -16,9 +18,9 @@ Leads own orchestration, critical decisions, integration acceptance, and user co
 
 For requests that explicitly ask for internet or web research, external references, current documentation, library comparisons, or proven patterns, Ultron makes a fresh `luna_researcher` child its first external-evidence action. The lead waits for that bounded evidence packet before planning and only researches directly afterward to fill a specific gap. Profiles and launchers enable live web search by default.
 
-Codex loads the three Luna specialties and the Astra specialist as first-class custom agents from `~/.codex/agents` or a trusted project's `.codex/agents`. Leads select exact underscore role names through the native subagent workflow. Each standalone TOML owns its model, reasoning effort, sandbox, and instructions; omitted plugin and tool integrations inherit from the parent. Assignments name only the required plan and files instead of copying full parent history. Luna work remains bounded and non-orchestrating. Only Ultron may select `astra_specialist`, and only for one exceptionally difficult, critical, self-contained execution task such as advanced 3D modeling. It is never used for orchestration or as a review, test, check, validation, QA, integration, or final-acceptance agent; Jarvis and Edith are explicitly prohibited from selecting it.
+Codex loads the three Luna specialties, the Sol worker, and the Astra specialist as first-class custom agents from `~/.codex/agents` or a trusted project's `.codex/agents`. Leads select exact underscore role names through the native subagent workflow. Each standalone TOML owns its model, reasoning effort, sandbox, and instructions; omitted plugin and tool integrations inherit from the parent. Assignments name only the required plan and files instead of copying full parent history. Luna work remains bounded and non-orchestrating. Only Ultron may select `astra_specialist`, and only for one exceptionally difficult, critical, self-contained execution task such as advanced 3D modeling. It is never used for orchestration or as a review, test, check, validation, QA, integration, or final-acceptance agent; Jarvis and Edith are explicitly prohibited from selecting it.
 
-Before the first implementation edit for non-trivial work, every lead entry path creates `tasks/plans/<task-slug>.md`. The file records Current Architecture, Intended Design, Preserved Interfaces, checkbox Milestones, and Validation. One milestone is marked in progress and checked immediately after focused validation before the next begins. Session Plan mode and internal todo state do not replace this repository artifact; `luna_worker` requires a ready plan milestone for non-trivial assignments while allowing trivial one-packet work to proceed.
+Before the first implementation edit for non-trivial work, every lead entry path creates `tasks/plans/<task-slug>.md`. The file records Current Architecture, Intended Design, Preserved Interfaces, checkbox Milestones, and Validation. One milestone is marked in progress and checked immediately after focused validation before the next begins. Session Plan mode and internal todo state do not replace this repository artifact; `luna_worker` and `sol_worker` require a ready plan milestone for non-trivial assignments while allowing trivial one-packet work to proceed.
 
 Profiles, lead agents, project config, and desktop launchers enable `browser@openai-bundled`, live search, and approval-free execution with `danger-full-access` by default. Agents use the active working folder first and broaden writes only when necessary under host policy. Set `CODEX_ULTRON_FULL_ACCESS=false` for an explicit `workspace-write` opt-out; launchers pass that restricted mode explicitly. For web-facing work, agents check native browser availability, reuse existing project-local Playwright/dependencies, install a suitable project-local Playwright/browser runtime when needed, launch and retest, then exercise the rendered flow and inspect page, console, network, and screenshot evidence before claiming success. Image work uses available image tools; missing hosted capability is reported and escalated without global installation.
 
@@ -88,8 +90,8 @@ chmod +x scripts/*.sh
 The launchers reject profile, model, provider, reasoning, and arbitrary config overrides. Direct equivalents are:
 
 ```sh
-codex --profile ultron --model gpt-5.6-sol
-codex --profile jarvis --model gpt-5.6-sol
+codex --profile ultron --model gpt-6.1-sol
+codex --profile jarvis --model gpt-6.1-sol
 ```
 
 Codex CLI has no native `--agent` primary-session switch. Launcher `-Agent`/`--agent` selects one of these profiles; standalone agent TOMLs apply when Codex selects a custom agent through its native subagent workflow. Mentioning `$codex-ultron` cannot replace the model of an already-running thread, and model, plugin, browser, and network availability still depend on the installed Codex runtime and host policy.

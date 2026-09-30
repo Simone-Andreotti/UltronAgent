@@ -19,7 +19,7 @@ permission_flags="--allow-all-tools --allow-all-urls --disallow-temp-dir"
 exec copilot \
     --plugin-dir "$package_root" \
     --agent ultron-orchestrator:edith \
-    --model gpt-5.6-luna \
+    --model gpt-6-luna \
     --reasoning-effort xhigh \
     $permission_flags \
     "$@"

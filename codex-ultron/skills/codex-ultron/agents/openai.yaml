@@ -1,7 +1,7 @@
 interface:
   display_name: "Codex Ultron"
-  short_description: "Ultron and Jarvis orchestration with Luna workers"
-  default_prompt: "Use $codex-ultron to choose the right lead and route routine plan steps to bounded Luna roles."
+  short_description: "Ultron and Jarvis orchestration with Luna and Sol workers"
+  default_prompt: "Use $codex-ultron to choose the right lead and route simple work to bounded Luna roles and difficult implementation to the Jarvis/Ultron-only Sol worker."
 
 policy:
   allow_implicit_invocation: true

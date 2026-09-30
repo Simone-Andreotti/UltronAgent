@@ -18,7 +18,7 @@ if (-not (Test-Path (Join-Path $codexHome "jarvis.config.toml"))) {
 
 $arguments = @(
     "--profile", "jarvis",
-    "--model", "gpt-5.6-sol",
+    "--model", "gpt-6.1-sol",
     "--config", 'model_reasoning_effort="high"',
     "--cd", $WorkingDirectory
 )

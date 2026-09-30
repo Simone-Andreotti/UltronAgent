@@ -19,7 +19,7 @@ $packageRoot = Split-Path -Parent $PSScriptRoot
 $arguments = @(
     "--plugin-dir", $packageRoot,
     "--agent", "ultron-orchestrator:ultron",
-    "--model", "gpt-5.6-sol",
+    "--model", "gpt-6.1-sol",
     "--reasoning-effort", "high",
     "-C", $WorkingDirectory
 )

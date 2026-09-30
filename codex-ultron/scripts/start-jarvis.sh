@@ -20,4 +20,4 @@ sandbox_mode_args=
 [ "${CODEX_ULTRON_FULL_ACCESS:-true}" = "false" ] && { full_access_flag=; sandbox_mode_args='--config sandbox_mode="workspace-write"'; }
 
 printf '%s\n' "Jarvis at your service."
-exec codex --profile jarvis --model gpt-5.6-sol --config 'model_reasoning_effort="high"' $live_search_flag $full_access_flag $sandbox_mode_args "$@"
+exec codex --profile jarvis --model gpt-6.1-sol --config 'model_reasoning_effort="high"' $live_search_flag $full_access_flag $sandbox_mode_args "$@"

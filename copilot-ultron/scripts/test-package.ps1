@@ -14,6 +14,7 @@ $expectedAgents = @(
     "luna-code-analyst",
     "luna-researcher",
     "luna-worker",
+    "sol-worker",
     "ultron"
 )
 $expectedEfforts = @{
@@ -24,15 +25,17 @@ $expectedEfforts = @{
     "luna-researcher" = "medium"
     "luna-worker" = "medium"
     "astra-specialist" = "high"
+    "sol-worker" = "high"
 }
 $expectedModels = @{
-    "ultron" = "gpt-5.6-sol"
-    "jarvis" = "gpt-5.6-sol"
-    "edith" = "gpt-5.6-luna"
-    "luna-code-analyst" = "gpt-5.6-luna"
-    "luna-researcher" = "gpt-5.6-luna"
-    "luna-worker" = "gpt-5.6-luna"
+    "ultron" = "gpt-6.1-sol"
+    "jarvis" = "gpt-6.1-sol"
+    "edith" = "gpt-6-luna"
+    "luna-code-analyst" = "gpt-6-luna"
+    "luna-researcher" = "gpt-6-luna"
+    "luna-worker" = "gpt-6-luna"
     "astra-specialist" = "gpt-6-astra"
+    "sol-worker" = "gpt-6.1-sol"
 }
 
 function Assert-True {
@@ -68,14 +71,16 @@ Assert-True (($mcpConfig.mcpServers.'ultron-playwright'.tools -join "") -eq "*")
 Assert-True (Test-Path (Join-Path $packageRoot $manifest.agents)) "Manifest agents path does not exist."
 Assert-True (Test-Path (Join-Path $packageRoot $manifest.skills)) "Manifest skills path does not exist."
 Assert-True (Test-Path $promptRoot) "Package prompts path does not exist."
-Assert-True ($config.model -eq "gpt-5.6-sol") "Example config must default to GPT-5.6 Sol."
+Assert-True ($config.model -eq "gpt-6.1-sol") "Example config must default to GPT-6.1 Sol."
 Assert-True ($config.contextTier -eq "default") "Example config must use default context."
 foreach ($lunaName in $expectedAgents | Where-Object { $_ -like "luna-*" }) {
     $lunaConfig = $config.subagents.agents."ultron-orchestrator:$lunaName"
-    Assert-True ($lunaConfig.model -eq "gpt-5.6-luna") "$lunaName must use GPT-5.6 Luna."
+    Assert-True ($lunaConfig.model -eq "gpt-6-luna") "$lunaName must use GPT-6 Luna."
     Assert-True ($lunaConfig.effortLevel -eq $expectedEfforts[$lunaName]) "$lunaName has the wrong reasoning effort."
     Assert-True ($lunaConfig.contextTier -eq "default") "$lunaName must use default context."
 }
+$solConfig = $config.subagents.agents.'ultron-orchestrator:sol-worker'
+Assert-True ($solConfig.model -eq "gpt-6.1-sol" -and $solConfig.effortLevel -eq "high" -and $solConfig.contextTier -eq "default") "Sol worker config must use Sol 6.1 high with default context."
 
 $yamlParser = @'
 import json
@@ -106,6 +111,9 @@ $agentFiles = @(Get-ChildItem $agentRoot -Filter "*.agent.md" | Sort-Object Name
 $agentNames = @()
 foreach ($agentFile in $agentFiles) {
     $content = Get-Content $agentFile.FullName -Raw
+    Assert-True ($content -match 'prefer the standard library, native platform features, and already installed dependencies') "$($agentFile.Name) must embed the engineering reuse policy."
+    Assert-True ($content -match 'Fix root causes in shared code' -and $content -match 'security, accessibility, error handling') "$($agentFile.Name) must preserve root-cause fixes and quality safeguards."
+    Assert-True ($content -notmatch '(?i)ponytail') "$($agentFile.Name) must not depend on the removed skill."
     $frontmatter = Get-AgentFrontmatter -Path $agentFile.FullName
     $nameMatch = [regex]::Match($content, "(?m)^name:\s*([^\r\n]+)\r?$")
     Assert-True $nameMatch.Success "Missing agent name in $($agentFile.Name)."
@@ -148,9 +156,9 @@ foreach ($leadName in @("ultron", "jarvis", "edith")) {
     Assert-True ($content -match "Never parallelize dependent work or overlapping writers") "$leadName must restrict unsafe parallel work."
     Assert-True ($content -match "exactly one detailed, narrowly scoped task") "$leadName must provide one narrow task per subagent."
     Assert-True ($content -match "cannot spawn or delegate to another agent") "$leadName must forbid recursive delegation."
-    Assert-True ($content -match "Code analysis uses high reasoning; research and implementation use medium reasoning") "$leadName must route Luna reasoning by role."
+    Assert-True ($content -match "(Luna code|Code) analysis uses high reasoning; research and implementation use medium reasoning") "$leadName must route Luna reasoning by role."
     Assert-True ($content -match "normally one") "$leadName must use the minimum worker count by default."
-    Assert-True ($content -match "plan milestone names exactly one Luna role, worker count, owned scope, dependencies, executable check, and escalation condition") "$leadName plan milestones need complete role contracts."
+    Assert-True ($content -match "plan milestone names exactly one (Luna|worker) role, worker count, owned scope, dependencies, executable check, and escalation condition") "$leadName plan milestones need complete role contracts."
     Assert-True ($content -match "repeat the browser check") "$leadName must require browser revalidation."
     Assert-True ($content -match 'When `/explain` is invoked') "$leadName must support explain mode."
     Assert-True ($content -match "private chain-of-thought") "$leadName explain mode must protect private reasoning."
@@ -172,6 +180,27 @@ Assert-True ($astraContent -match "gpt-6-astra") "Astra specialist must use GPT-
 Assert-True ($astraContent -match "(?m)^reasoningEffort:\s*high") "Astra specialist must use high reasoning."
 Assert-True ($astraContent -match "Never orchestrate") "Astra specialist must reject orchestration."
 Assert-True ($astraContent -match "Never accept an assignment whose primary purpose is review, testing, checking") "Astra specialist must reject checks."
+
+$solContent = Get-Content (Join-Path $agentRoot "sol-worker.agent.md") -Raw
+$solMetadata = Get-AgentFrontmatter -Path (Join-Path $agentRoot "sol-worker.agent.md")
+Assert-True ($solMetadata.agents.Count -eq 0 -and $solMetadata.'user-invocable' -eq $false) "Sol worker must be hidden and non-delegating."
+Assert-True ($solContent -match 'explicitly identifies Jarvis or Ultron as the caller') "Sol worker must require an authorized lead caller."
+Assert-True ($solContent -match 'Reject every assignment from Edith, a Luna role, another worker, or any other caller') "Sol worker must reject unauthorized callers."
+Assert-True ($solContent -match 'Never accept standalone research, testing, simple checks, simple fixes, or simple implementation') "Sol worker must leave routine work to Luna."
+Assert-True ($solContent -match 'complex algorithms, 3D modeling') "Sol worker must cover difficult implementation."
+Assert-True ($solContent -match 'never invoke agent, task, handoff, or delegation tools') "Sol worker must reject recursive delegation."
+foreach ($leadName in @("edith", "jarvis", "ultron")) {
+    $leadPath = Join-Path $agentRoot "$leadName.agent.md"
+    $leadMetadata = Get-AgentFrontmatter -Path $leadPath
+    $content = Get-Content $leadPath -Raw
+    Assert-True (($leadMetadata.agents -contains "sol-worker") -eq ($leadName -ne "edith")) "$leadName has an invalid Sol worker allowlist."
+    if ($leadName -eq "edith") {
+        Assert-True ($content -match 'Never invoke or instruct `sol-worker`') "Edith must prohibit Sol worker invocation."
+    } else {
+        Assert-True ($content -match 'Only Jarvis and Ultron may invoke `sol-worker`') "$leadName must gate Sol worker invocation."
+        Assert-True ($content -match 'Before invoking `luna-worker` or `sol-worker` for non-trivial work') "$leadName must plan before either worker implements."
+    }
+}
 
 $analystBoundary = 'Start with task-named files or symbols; if none are named, use only targeted searches to locate them. Never inventory directories or read unrelated files. Stop once evidence answers the assigned question.'
 $analystOutputBoundary = 'Return a compact evidence packet of at most 500 words, except when a blocker needs more detail'
@@ -215,6 +244,7 @@ if (Test-Path (Join-Path $workspaceAgentRoot ".ultron-orchestrator-agents")) {
 }
 
 $packagedSkill = Get-Content (Join-Path $packageRoot "skills\ultron-orchestrator\SKILL.md") -Raw
+Assert-True ($packagedSkill -match 'No external simplification skill is required or invoked' -and $packagedSkill -notmatch '(?i)ponytail') "Orchestration must use embedded principles without the removed skill."
 $workspaceSkillPath = Join-Path $workspaceRoot ".github\skills\ultron-orchestrator\SKILL.md"
 if ((Test-Path (Join-Path $workspaceAgentRoot ".ultron-orchestrator-agents")) -and (Test-Path $workspaceSkillPath)) {
     $workspaceSkill = Get-Content $workspaceSkillPath -Raw
@@ -233,7 +263,7 @@ Assert-True ($packagedSkill -match "use high reasoning for code analysis and med
 Assert-True ($packagedSkill -match "available browser or Playwright tools") "Orchestrator skill must require browser validation when applicable."
 Assert-True ($packagedSkill -match "## Explain Mode") "Orchestrator skill is missing explain mode guidance."
 Assert-True ($packagedSkill -match "normally one") "Orchestrator skill must use the minimum worker count."
-Assert-True ($packagedSkill -match "plan milestone names exactly one Luna role, count, owned scope, dependencies, executable check, and escalation condition") "Orchestrator skill must define milestone role contracts."
+Assert-True ($packagedSkill -match "plan milestone names exactly one worker role, count, owned scope, dependencies, executable check, and escalation condition") "Orchestrator skill must define milestone role contracts."
 Assert-True ($packagedSkill -match "native browser tooling first") "Orchestrator skill must define browser fallback routing."
 Assert-True ($packagedSkill -match "host-supplied image capability") "Orchestrator skill must define image-tool fallback behavior."
 
@@ -249,23 +279,24 @@ Assert-True ($packagedExplainPrompt -notmatch "(?m)^model:") "Explain prompt mus
 Assert-True ($packagedExplainPrompt -match "private chain-of-thought") "Explain prompt must protect private reasoning."
 
 $nativeAgents = @{
-    "ultron.toml" = "gpt-5.6-sol"
-    "jarvis.toml" = "gpt-5.6-sol"
-    "luna_code_analyst.toml" = "gpt-5.6-luna"
-    "luna_researcher.toml" = "gpt-5.6-luna"
-    "luna_worker.toml" = "gpt-5.6-luna"
+    "ultron.toml" = "gpt-6.1-sol"
+    "jarvis.toml" = "gpt-6.1-sol"
+    "luna_code_analyst.toml" = "gpt-6-luna"
+    "luna_researcher.toml" = "gpt-6-luna"
+    "luna_worker.toml" = "gpt-6-luna"
+    "sol_worker.toml" = "gpt-6.1-sol"
 }
 foreach ($nativeAgent in $nativeAgents.Keys) {
     $content = Get-Content (Join-Path $codexPackageRoot "agents\$nativeAgent") -Raw
     Assert-True ($content -match ('(?m)^model = "' + [regex]::Escape($nativeAgents[$nativeAgent]) + '"\r?$')) "Invalid native model in $nativeAgent."
 }
 $launchers = @{
-    "start-edith.ps1" = @{ Model = "gpt-5.6-luna"; Effort = "xhigh" }
-    "start-ultron.ps1" = @{ Model = "gpt-5.6-sol"; Effort = "high" }
-    "start-jarvis.ps1" = @{ Model = "gpt-5.6-sol"; Effort = "high" }
-    "start-edith.sh" = @{ Model = "gpt-5.6-luna"; Effort = "xhigh" }
-    "start-ultron.sh" = @{ Model = "gpt-5.6-sol"; Effort = "high" }
-    "start-jarvis.sh" = @{ Model = "gpt-5.6-sol"; Effort = "high" }
+    "start-edith.ps1" = @{ Model = "gpt-6-luna"; Effort = "xhigh" }
+    "start-ultron.ps1" = @{ Model = "gpt-6.1-sol"; Effort = "high" }
+    "start-jarvis.ps1" = @{ Model = "gpt-6.1-sol"; Effort = "high" }
+    "start-edith.sh" = @{ Model = "gpt-6-luna"; Effort = "xhigh" }
+    "start-ultron.sh" = @{ Model = "gpt-6.1-sol"; Effort = "high" }
+    "start-jarvis.sh" = @{ Model = "gpt-6.1-sol"; Effort = "high" }
 }
 foreach ($launcherName in $launchers.Keys) {
     $content = Get-Content (Join-Path $PSScriptRoot $launcherName) -Raw
@@ -343,10 +374,10 @@ foreach ($launcherName in @("start-edith.sh", "start-ultron.sh", "start-jarvis.s
 }
 
 $readme = Get-Content (Join-Path $packageRoot "README.md") -Raw
-Assert-True ($readme -match 'Ultron and Jarvis request `gpt-5\.6-sol` with high reasoning') "README must document Ultron model routing."
+Assert-True ($readme -match 'Ultron and Jarvis request `gpt-6\.1-sol` with high reasoning') "README must document Ultron model routing."
 Assert-True ($readme -match 'Ultron alone may invoke `astra-specialist`') "README must document Astra specialist routing."
-Assert-True ($readme -match 'Ultron and Jarvis request `gpt-5\.6-sol` with high reasoning') "README must document Jarvis model routing."
-Assert-True ($readme -match 'Edith requests `gpt-5\.6-luna` with maximum \(`xhigh`\) reasoning') "README must document Edith model routing."
+Assert-True ($readme -match 'Ultron and Jarvis request `gpt-6\.1-sol` with high reasoning') "README must document Jarvis model routing."
+Assert-True ($readme -match 'Edith requests `gpt-6-luna` with maximum \(`xhigh`\) reasoning') "README must document Edith model routing."
 Assert-True ($readme -match 'canonical `playwright/\*` namespace') "README must document the canonical Playwright namespace."
 Assert-True ($readme -match '@mcp playwright') "README must document the VS Code Playwright MCP installation."
 Assert-True ($readme -match '@playwright/mcp@0\.0\.79') "README must document the pinned Playwright MCP fallback."

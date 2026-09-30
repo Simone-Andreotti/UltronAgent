@@ -48,14 +48,15 @@ if [ -z "$agent" ]; then
 fi
 
 case "$agent" in
-    edith) model="gpt-5.6-luna"; effort="xhigh"; instructions_file="edith.md" ;;
-    jarvis) model="gpt-5.6-sol"; effort="high"; instructions_file="jarvis.md" ;;
-    ultron) model="gpt-5.6-sol"; effort="high"; instructions_file="ultron.md" ;;
+    edith) model="gpt-6-luna"; effort="xhigh"; instructions_file="edith.md" ;;
+    jarvis) model="gpt-6.1-sol"; effort="high"; instructions_file="jarvis.md" ;;
+    ultron) model="gpt-6.1-sol"; effort="high"; instructions_file="ultron.md" ;;
     *) printf 'Unknown lead: %s\n' "$agent" >&2; exit 2 ;;
 esac
 
 codex_home=${CODEX_HOME:-"$HOME/.codex"}
 required_agents="luna_code_analyst.toml luna_researcher.toml luna_worker.toml"
+case "$agent" in jarvis|ultron) required_agents="$required_agents sol_worker.toml" ;; esac
 [ "$agent" = "ultron" ] && required_agents="$required_agents astra_specialist.toml"
 for required_agent in $required_agents; do
     [ -f "$codex_home/agents/$required_agent" ] || { printf '%s\n' "Codex Ultron agent '$required_agent' is not installed. Run install.sh first." >&2; exit 1; }
@@ -68,4 +69,4 @@ sandbox_mode=${CODEX_ULTRON_FULL_ACCESS:+danger-full-access}
 [ "${CODEX_ULTRON_FULL_ACCESS:-true}" = "false" ] && sandbox_mode=workspace-write
 [ -n "$sandbox_mode" ] || sandbox_mode=danger-full-access
 
-exec codex app --config "model=\"$model\"" --config "model_reasoning_effort=\"$effort\"" --config 'model_verbosity="low"' --config 'approval_policy="never"' --config "sandbox_mode=\"$sandbox_mode\"" --config 'sandbox_workspace_write.network_access=true' --config 'web_search="live"' --config 'plugins."browser@openai-bundled".enabled=true' --config 'agents.enabled=true' --config 'agents.max_concurrent_threads_per_session=6' --config 'agents.default_subagent_model="gpt-5.6-luna"' --config 'agents.default_subagent_reasoning_effort="xhigh"' --config "$developer_instructions" "$working_directory"
+exec codex app --config "model=\"$model\"" --config "model_reasoning_effort=\"$effort\"" --config 'model_verbosity="low"' --config 'approval_policy="never"' --config "sandbox_mode=\"$sandbox_mode\"" --config 'sandbox_workspace_write.network_access=true' --config 'web_search="live"' --config 'plugins."browser@openai-bundled".enabled=true' --config 'agents.enabled=true' --config 'agents.max_concurrent_threads_per_session=6' --config 'agents.default_subagent_model="gpt-6-luna"' --config 'agents.default_subagent_reasoning_effort="xhigh"' --config "$developer_instructions" "$working_directory"

@@ -18,7 +18,7 @@ if (-not (Test-Path (Join-Path $codexHome "edith.config.toml"))) {
 
 $arguments = @(
     "--profile", "edith",
-    "--model", "gpt-5.6-luna",
+    "--model", "gpt-6-luna",
     "--config", 'model_reasoning_effort="xhigh"',
     "--cd", $WorkingDirectory
 )

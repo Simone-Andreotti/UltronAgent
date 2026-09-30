@@ -44,9 +44,9 @@ if [ -z "$agent" ]; then
 fi
 
 case "$agent" in
-    edith) profile="edith"; model="gpt-5.6-luna"; effort="xhigh"; greeting="Edith at your service." ;;
-    jarvis) profile="jarvis"; model="gpt-5.6-sol"; effort="high"; greeting="Jarvis at your service." ;;
-    ultron) profile="ultron"; model="gpt-5.6-sol"; effort="high"; greeting="Lowly human, let Ultron manage the rest." ;;
+    edith) profile="edith"; model="gpt-6-luna"; effort="xhigh"; greeting="Edith at your service." ;;
+    jarvis) profile="jarvis"; model="gpt-6.1-sol"; effort="high"; greeting="Jarvis at your service." ;;
+    ultron) profile="ultron"; model="gpt-6.1-sol"; effort="high"; greeting="Lowly human, let Ultron manage the rest." ;;
     *) printf 'Unknown lead: %s\n' "$agent" >&2; exit 2 ;;
 esac
 

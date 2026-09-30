@@ -11,9 +11,9 @@ if ($args.Count -gt 0) {
 }
 
 $leadDefinitions = @{
-    edith = @{ Model = "gpt-5.6-luna"; Effort = "xhigh"; Instructions = "edith.md"; Label = "Edith" }
-    jarvis = @{ Model = "gpt-5.6-sol"; Effort = "high"; Instructions = "jarvis.md"; Label = "Jarvis" }
-    ultron = @{ Model = "gpt-5.6-sol"; Effort = "high"; Instructions = "ultron.md"; Label = "Ultron" }
+    edith = @{ Model = "gpt-6-luna"; Effort = "xhigh"; Instructions = "edith.md"; Label = "Edith" }
+    jarvis = @{ Model = "gpt-6.1-sol"; Effort = "high"; Instructions = "jarvis.md"; Label = "Jarvis" }
+    ultron = @{ Model = "gpt-6.1-sol"; Effort = "high"; Instructions = "ultron.md"; Label = "Ultron" }
 }
 
 if (-not $Agent) {
@@ -33,6 +33,7 @@ if (-not $Agent) {
 $selectedLead = $leadDefinitions[$Agent]
 $codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME ".codex" }
 $requiredAgents = @("luna_code_analyst.toml", "luna_researcher.toml", "luna_worker.toml")
+if ($Agent -in @("jarvis", "ultron")) { $requiredAgents += "sol_worker.toml" }
 if ($Agent -eq "ultron") { $requiredAgents += "astra_specialist.toml" }
 foreach ($requiredAgent in $requiredAgents) {
     if (-not (Test-Path (Join-Path $codexHome "agents\$requiredAgent"))) {
@@ -56,7 +57,7 @@ $arguments = @(
     "--config", 'plugins."browser@openai-bundled".enabled=true',
     "--config", 'agents.enabled=true',
     "--config", 'agents.max_concurrent_threads_per_session=6',
-    "--config", 'agents.default_subagent_model="gpt-5.6-luna"',
+    "--config", 'agents.default_subagent_model="gpt-6-luna"',
     "--config", 'agents.default_subagent_reasoning_effort="xhigh"',
     "--config", "developer_instructions=$encodedInstructions",
     $WorkingDirectory
