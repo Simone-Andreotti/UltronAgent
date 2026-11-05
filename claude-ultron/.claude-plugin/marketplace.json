@@ -1,0 +1,18 @@
+{
+  "name": "ultron-claude",
+  "owner": {
+    "name": "Simone Andreotti"
+  },
+  "description": "Ultron, Jarvis, and Edith leads for Claude Code.",
+  "plugins": [
+    {
+      "name": "leads",
+      "source": "./plugins/leads",
+      "description": "Ultron, Jarvis, and Edith as selectable leads over Opus 5.5, Sonnet 5.5, and Haiku 5.5 workers.",
+      "author": {
+        "name": "Simone Andreotti"
+      },
+      "category": "development"
+    }
+  ]
+}

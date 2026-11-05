@@ -1,0 +1,10 @@
+{
+  "name": "leads",
+  "version": "1.0.0",
+  "description": "Ultron, Jarvis, and Edith as selectable leads over Opus 5.5, Sonnet 5.5, and Haiku 5.5 workers, with fixed routing and lead-owned acceptance.",
+  "author": {
+    "name": "Simone Andreotti"
+  },
+  "keywords": ["ultron", "jarvis", "edith", "orchestration", "lead"],
+  "types": "./types/index.d.ts"
+}

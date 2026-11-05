@@ -14,3 +14,4 @@ Thumbs.db
 !.env.example
 *.log
 codex-ultron/.plugin-build/
+claude-ultron/plugins/leads/.claude-plugin/types/
