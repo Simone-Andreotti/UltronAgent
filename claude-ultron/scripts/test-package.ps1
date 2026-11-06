@@ -29,6 +29,7 @@ $expectedAgents = @{
     "jarvis.md" = @("claude-sonnet-5-5", "xhigh")
     "edith.md" = @("claude-haiku-5-5", "max")
     "opus-specialist.md" = @("claude-opus-5-5", "xhigh")
+    "opus-reviewer.md" = @("claude-opus-5-5", "xhigh")
     "sonnet-worker.md" = @("claude-sonnet-5-5", "xhigh")
     "haiku-worker.md" = @("claude-haiku-5-5", "max")
     "haiku-researcher.md" = @("claude-haiku-5-5", "max")
@@ -37,8 +38,8 @@ $expectedAgents = @{
 $leads = @{
     "ultron.md" = @{
         Greeting = "Lowly human, let Ultron manage the rest."
-        Workers = @("haiku-code-analyst", "haiku-researcher", "haiku-worker", "sonnet-worker", "opus-specialist")
-        Table = "\[\.\.\.HAIKU_ROLES, 'leads:sonnet-worker', 'leads:opus-specialist'\]"
+        Workers = @("haiku-code-analyst", "haiku-researcher", "haiku-worker", "sonnet-worker", "opus-specialist", "opus-reviewer")
+        Table = "\[\.\.\.HAIKU_ROLES, 'leads:sonnet-worker', 'leads:opus-specialist', 'leads:opus-reviewer'\]"
     }
     "jarvis.md" = @{
         Greeting = "Jarvis at your service."
@@ -53,7 +54,7 @@ $leads = @{
 }
 $principles = 'Understand assigned flows and callers before editing. Fix root causes in shared code. Reuse existing code; prefer the standard library, native platform features, and already installed dependencies. Choose the smallest complete, readable change; delete obsolete code and skip speculative features, abstractions, and boilerplate. Preserve validation, security, accessibility, error handling against data loss, explicit requirements, and hardware calibration. Run focused executable checks; avoid redundant tests. Document deliberate limits and upgrade conditions. Respect role boundaries. No external simplification skill is required or invoked.'
 
-Assert-True ((Get-ChildItem $agentRoot -Filter "*.md").Count -eq $expectedAgents.Count) "Package must contain all eight agents."
+Assert-True ((Get-ChildItem $agentRoot -Filter "*.md").Count -eq $expectedAgents.Count) "Package must contain all nine agents."
 foreach ($agentFile in $expectedAgents.Keys) {
     $content = Read-Text (Join-Path $agentRoot $agentFile)
     $name = [System.IO.Path]::GetFileNameWithoutExtension($agentFile)
@@ -71,15 +72,19 @@ foreach ($agentFile in $expectedAgents.Keys) {
     }
 }
 
-$codePreflight = 'Before planning or implementation for non-trivial, ambiguous, multi-file, or architectural work, first spawn exactly one bounded read-only `leads:haiku-code-analyst` task to inspect only files and symbols needed for the assigned task or question; simple local fixes may stay direct.'
-$researchPreflight = 'When the user explicitly requests external/current web research, the first external-evidence action must be exactly one bounded `leads:haiku-researcher` spawn, before lead web research.'
+$codePreflight = 'Before planning or implementation for non-trivial, ambiguous, multi-file, or architectural work, first spawn one bounded read-only `leads:haiku-code-analyst` task per narrow question to inspect only files and symbols needed for the assigned task or question; simple local fixes may stay direct.'
+$researchPreflight = 'When the user explicitly requests external/current web research, the first external-evidence action must be one bounded `leads:haiku-researcher` spawn per evidence question, before lead web research.'
 $leadTable = Read-Text (Join-Path $pluginRoot "hooks\leads.ts")
 foreach ($leadFile in $leads.Keys) {
     $content = Read-Text (Join-Path $agentRoot $leadFile)
     $lead = $leads[$leadFile]
     Assert-True ($content.Contains('exactly `' + $lead.Greeting + '` once')) "$leadFile is missing its exact greeting."
-    Assert-True ($content -match 'work silently without progress, plan, reasoning, tool, or status narration') "$leadFile must use the silent output contract."
-    Assert-True ($content -match 'respond only with `0`' -and $content -match 'respond only with `1`') "$leadFile must use binary status output."
+    Assert-True ($content -match 'write an abstract of the plan') "$leadFile must show its plan in the chat."
+    Assert-True ($content -match 'Do not write reasoning, tool-by-tool narration, or filler') "$leadFile must keep its reports short."
+    Assert-True ($content -match 'end with `0` on its own last line' -and $content -match 'end with `1` on its own last line') "$leadFile must end with a binary status."
+    Assert-True ($content -match 'You decide what needs your own review') "$leadFile must decide what it reviews."
+    Assert-True ($content -match 'create a new branch' -and $content -match 'Commit on it after each accepted milestone') "$leadFile must branch for a long job and commit each milestone."
+    Assert-True ($content -match 'no limit on how many children') "$leadFile must not cap its workers."
     Assert-True ($content.Contains($codePreflight)) "$leadFile is missing the code-analysis preflight."
     Assert-True ($content.Contains($researchPreflight)) "$leadFile is missing the research preflight."
     Assert-True ($content -match 'Before the first implementation edit for any non-trivial task') "$leadFile must create a persistent plan before implementation."
@@ -95,7 +100,7 @@ foreach ($leadFile in $leads.Keys) {
     Assert-True ($content -match 'For any decisive check, run it yourself') "$leadFile must repeat decisive checks."
     Assert-True ($content -match 'open the sources or references that your decision rests on') "$leadFile must verify delegated evidence."
     Assert-True ($content -match 'respond `1`, never `0`') "$leadFile must not report success over a known defect."
-    Assert-True ($content -match 'end the turn with exactly') "$leadFile must wait with a visible marker, since an empty reply draws a harness prompt."
+    Assert-True ($content -match 'end the turn with one short line') "$leadFile must wait with a visible line, since an empty reply draws a harness prompt."
     Assert-True ($content -match '`1` plus one line') "$leadFile must say how to report a blocker."
     Assert-True ($content -match 'reports as unverified') "$leadFile must own what a child could not verify."
     Assert-True ($content -match 'absence or completeness') "$leadFile must check negative claims itself."
@@ -123,6 +128,10 @@ foreach ($leadFile in $leads.Keys) {
     Assert-True ($entry -match "workers: $($lead.Table)") "hooks/leads.ts gives $id the wrong workers."
 }
 
+$ultron = Read-Text (Join-Path $agentRoot "ultron.md")
+Assert-True ($ultron -match '## Independent verification') "Ultron must verify its own work."
+Assert-True ($ultron -match 'agentType') "Ultron must keep a workflow's agents on its workers' tiers."
+Assert-True ($ultron -match 'ASD-STE100') "Ultron must write in the style of ASD-STE100."
 $jarvis = Read-Text (Join-Path $agentRoot "jarvis.md")
 Assert-True ($jarvis -match 'Never select or instruct `leads:opus-specialist`') "Jarvis must not reach the Opus specialist."
 $edith = Read-Text (Join-Path $agentRoot "edith.md")
@@ -135,7 +144,7 @@ foreach ($text in @($jarvis, $edith)) {
     Assert-True ($text -match 'Never ask for, suggest, or hand over to another lead') "Jarvis and Edith must not ask for another lead."
 }
 
-foreach ($workerFile in @("haiku-worker.md", "haiku-researcher.md", "haiku-code-analyst.md", "sonnet-worker.md", "opus-specialist.md")) {
+foreach ($workerFile in @("haiku-worker.md", "haiku-researcher.md", "haiku-code-analyst.md", "sonnet-worker.md", "opus-specialist.md", "opus-reviewer.md")) {
     $content = Read-Text (Join-Path $agentRoot $workerFile)
     Assert-True ($content -match '(?m)^disallowedTools: Agent, Skill, SendMessage, TaskStop\b') "$workerFile must structurally disable recursive delegation, including a forked skill and waking a sibling."
     $name = [System.IO.Path]::GetFileNameWithoutExtension($workerFile)
@@ -144,7 +153,7 @@ foreach ($workerFile in @("haiku-worker.md", "haiku-researcher.md", "haiku-code-
     Assert-True ($content -notmatch '(?m)^tools:') "$workerFile must inherit MCP tools rather than list its tools."
     Assert-True ($content -match '(?i)never.*(spawn|delegate)') "$workerFile must forbid recursive delegation."
 }
-foreach ($readOnlyFile in @("haiku-researcher.md", "haiku-code-analyst.md")) {
+foreach ($readOnlyFile in @("haiku-researcher.md", "haiku-code-analyst.md", "opus-reviewer.md")) {
     $content = Read-Text (Join-Path $agentRoot $readOnlyFile)
     Assert-True ($content -match '(?m)^disallowedTools: Agent, Skill, SendMessage, TaskStop, Edit, Write, NotebookEdit$') "$readOnlyFile must have no edit tools; its shell use rests on the contract."
     Assert-True ($content -match 'The task contract is read-only') "$readOnlyFile must keep its read-only contract."

@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { ApiMessage, EngineInterface, Register } from 'claude-code'
+import type { ApiMessage, EngineInterface, Register, TurnStepChunk } from 'claude-code'
 
 import type { RunningLead } from '../types'
 import { isLeadId, LEADS, leadFromAgentName, namesLead, parseMention, WORKER_EFFORT } from './leads'
@@ -7,7 +7,7 @@ import type { Lead, LeadId } from './leads'
 
 const OFF = 'off'
 const MAX_REMEMBERED_SESSIONS = 200
-const MAX_RUNNING_WORKERS = 6
+const STALL_MINUTES = 5
 const PERSON_ORIGINS: readonly string[] = ['composer', 'bridge', 'sdk']
 
 // What a chat's own messages say about its lead, on a line of their own:
@@ -17,7 +17,7 @@ const PERSON_ORIGINS: readonly string[] = ['composer', 'bridge', 'sdk']
 const MARKER = /^\[leads:(selected|kept):(ultron|jarvis|edith|off)\]$/gm
 
 // What the engine's summary must carry, since it is all a lead continues from.
-const SUMMARY_KEEPS = "Keep the active plan file's path and milestone, every child still running, and every claim not yet verified."
+const SUMMARY_KEEPS = "Keep the active plan file's path and milestone, every child still running, every child branch not yet merged, and every claim not yet verified."
 
 const running = atom({ plugin: 'leads', key: 'running' } as const, null)
 
@@ -204,11 +204,27 @@ const select = async ($: EngineInterface, value: LeadId | typeof OFF, previous: 
   await showRunning($, value === OFF ? null : labelled(LEADS[value]))
 }
 
+// A lead waits on a notification, so a child whose model request never answers
+// would hold it for good. Stopping the child is what sends that notification. Tools
+// are not steps, so a long-running command does not count as silence.
+async function* watched($: EngineInterface, agentId: string, stream: AsyncIterable<TurnStepChunk>) {
+  let silentMinutes = 0
+  const tick = $.clock.every(60 * 1000, () => {
+    silentMinutes += 1
+    if (silentMinutes === STALL_MINUTES) void $.tool.call({ tool: 'TaskStop', task_id: agentId } as never)
+  })
+  try {
+    for await (const chunk of stream) {
+      silentMinutes = 0
+      yield chunk
+    }
+  } finally {
+    tick.cancel()
+  }
+}
+
 // Whether the main loop's last request ran on the lead's own model.
 let isModelPinned = true
-// Calls that passed the worker limit and may not be listed yet, since a response's
-// calls all reach it before the first has started.
-let spawning = 0
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
@@ -339,7 +355,7 @@ export const register: Register = on => {
 
       const effort = WORKER_EFFORT[agent.type]
 
-      return yield* next(effort ? { ...e, effort } : { ...e, model: owner.model, effort: owner.effort })
+      return yield* watched($, e.agentId, next(effort ? { ...e, effort } : { ...e, model: owner.model, effort: owner.effort }))
     }
 
     if (!lead) {
@@ -411,24 +427,15 @@ export const register: Register = on => {
     if (e.model || e.effort) {
       return { deny: `The agent file owns ${e.subagent_type}'s model and effort. Call it without them.` }
     }
-    const listed = (await $.agent.list()).filter(({ status }) => status === 'pending' || status === 'running').length
-    const busy = listed + spawning
-    if (busy >= MAX_RUNNING_WORKERS) {
-      return { deny: `${lead.label} already has ${busy} workers running. Wait for one to finish.` }
-    }
 
-    spawning += 1
-    try {
-      return await next(e)
-    } finally {
-      spawning -= 1
-    }
+    return next(e)
   }).catch(($, e, next) => (next.called ? next(e) : { deny: `${$.plugin.name}: its routing guard failed.` }))
 
   on('tool.call', { tool: 'Workflow' }, async ($, e, next) => {
     const lead = await activeLead($)
 
-    return lead ? { deny: `${lead.label} delegates through its own workers, not workflows.` } : next(e)
+    // A workflow's agents can run on any tier, so only the lead with every tier starts one.
+    return lead && lead.id !== 'ultron' ? { deny: `${lead.label} delegates through its own workers, not workflows.` } : next(e)
   }).catch(($, e, next) => (next.called ? next(e) : { deny: `${$.plugin.name}: its routing guard failed.` }))
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {

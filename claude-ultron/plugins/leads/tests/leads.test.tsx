@@ -21,10 +21,10 @@ type World = {
   folders?: string[]
   ownAgentFiles?: string[]
   settings?: Record<string, unknown>
-  toolHeldUntil?: Promise<void>
+  onTool?: (input: { task_id: string }) => void
 }
 
-const world = (on: On, { env = {}, agents = [], messages = [], entries = {}, isBlocked = () => false, folders = [], ownAgentFiles = [], settings = {}, toolHeldUntil }: World = {}) => {
+const world = (on: On, { env = {}, agents = [], messages = [], entries = {}, isBlocked = () => false, folders = [], ownAgentFiles = [], settings = {}, onTool }: World = {}) => {
   const store = new Map<string, unknown>(Object.entries(entries))
   const health = { isBroken: false }
   const guarded = <T,>(answer: () => T) => {
@@ -45,8 +45,8 @@ const world = (on: On, { env = {}, agents = [], messages = [], entries = {}, isB
   on('fs.exists', (_, e) => ({ value: folders.some(folder => e.path.endsWith(folder)) }) as never)
   on('fs.ancestors', (_, e) => ({ value: e.names.filter(name => ownAgentFiles.includes(name)).map(name => ({ name })) }) as never)
   on('prompt.submit', (_, e) => (isBlocked(e.text) ? { drop: 'blocked' } : { text: e.text, context: e.context }))
-  on('tool.call', async () => {
-    await toolHeldUntil
+  on('tool.call', async (_, e) => {
+    onTool?.(e as never)
 
     return { result: {} } as never
   })
@@ -187,6 +187,33 @@ test('a forked skill runs on the lead, the engine\'s own forks are left alone', 
     { model: 'claude-haiku-5-5', effort: 'max' },
     { model: 'claude-opus-5-5', effort: 'medium' },
   ])
+})
+
+test('a worker whose request stays silent is stopped, and one that answers is not', async ($, on) => {
+  const clock = mock.clock(on)
+  const stopped: string[] = []
+  const agents: Agent[] = []
+  world(on, { agents, onTool: e => stopped.push(e.task_id) })
+  on('turn.step', async function* (_, e) {
+    if (e.agentId === 'hung') await new Promise(() => {})
+    await clock.sleep(4 * 60 * 1000)
+    yield { kind: 'text', index: 0, text: 'x', turnId: e.turnId, step: e.index } as never
+    await clock.sleep(4 * 60 * 1000)
+
+    return { turnId: e.turnId, index: e.index, answer: '', toolUses: [] } as never
+  })
+
+  await $.prompt.submit({ text: '@edith go', origin: { kind: 'composer' } })
+  agents.push({ id: 'hung', type: 'leads:haiku-worker', status: 'running' }, { id: 'slow', type: 'leads:haiku-worker', status: 'running' })
+  void step($, 'claude-haiku-5-5', 'hung')
+  const slow = step($, 'claude-haiku-5-5', 'slow')
+  await clock.settle()
+  await clock.advance(4 * 60 * 1000)
+  expect(stopped).toEqual([])
+  await clock.advance(4 * 60 * 1000)
+  await slow
+
+  expect(stopped).toEqual(['hung'])
 })
 
 test('a change of lead leaves running agents on what they run on', async ($, on) => {
@@ -611,10 +638,12 @@ test('each lead reaches only its own workers, with no per-call overrides', async
 
   await $.prompt.submit({ text: '@jarvis go', origin: { kind: 'composer' } })
   expect((await call({ subagent_type: 'leads:sonnet-worker' })).deny).toBeUndefined()
+  expect((await call({ subagent_type: 'leads:opus-reviewer' })).deny).toMatch(/may delegate only/)
   expect((await call({ subagent_type: 'leads:opus-specialist' })).deny).toMatch(/may delegate only/)
 
   await $.prompt.submit({ text: '@ultron go', origin: { kind: 'composer' } })
   expect((await call({ subagent_type: 'leads:opus-specialist' })).deny).toBeUndefined()
+  expect((await call({ subagent_type: 'leads:opus-reviewer' })).deny).toBeUndefined()
   expect((await call({ subagent_type: 'Explore' })).deny).toMatch(/may delegate only/)
   expect((await call({})).deny).toMatch(/may delegate only/)
   expect((await call({ subagent_type: 'leads:haiku-worker', model: 'opus' })).deny).toMatch(/owns/)
@@ -636,53 +665,27 @@ test('a forked skill holds the same limits as its lead', async ($, on) => {
   expect(nested.deny).toMatch(/may delegate only/)
 })
 
-test('a lead runs at most six workers at once', async ($, on) => {
-  const agents = Array.from({ length: 6 }, (_, index) => ({
-    id: `worker-${index}`,
-    type: 'leads:haiku-worker',
-    status: index === 0 ? 'pending' : 'running',
-  }))
+test('a lead has no limit on running workers', async ($, on) => {
+  const agents = Array.from({ length: 40 }, (_, index) => ({ id: `worker-${index}`, type: 'leads:haiku-worker', status: 'running' }))
   world(on, { agents })
 
-  await $.prompt.submit({ text: '@ultron go', origin: { kind: 'composer' } })
-  const ran = await $.tool.call({ tool: 'Agent', prompt: 'go', description: 't', subagent_type: 'leads:haiku-worker' } as never)
-
-  expect(ran.deny).toMatch(/already has 6 workers/)
-})
-
-test('calls of one response count against the six before they are listed', async ($, on) => {
-  let release = () => {}
-  world(on, { toolHeldUntil: new Promise<void>(resolve => (release = resolve)) })
-  await $.prompt.submit({ text: '@ultron go', origin: { kind: 'composer' } })
-
-  const calls = Array.from({ length: 8 }, () =>
-    $.tool.call({ tool: 'Agent', prompt: 'go', description: 't', subagent_type: 'leads:haiku-worker' } as never),
-  )
-  const refused = await Promise.all(calls.slice(6))
-  release()
-  const started = await Promise.all(calls.slice(0, 6))
-
-  expect(refused.every(result => result.deny?.includes('already has'))).toBe(true)
-  expect(started.every(result => !result.deny)).toBe(true)
-})
-
-test('finished workers do not count against the six', async ($, on) => {
-  const agents = Array.from({ length: 6 }, (_, index) => ({ id: `w-${index}`, type: 'leads:haiku-worker', status: 'completed' }))
-  world(on, { agents })
-
-  await $.prompt.submit({ text: '@ultron go', origin: { kind: 'composer' } })
+  await $.prompt.submit({ text: '@edith go', origin: { kind: 'composer' } })
   const ran = await $.tool.call({ tool: 'Agent', prompt: 'go', description: 't', subagent_type: 'leads:haiku-worker' } as never)
 
   expect(ran.deny).toBeUndefined()
 })
 
-test('a lead refuses workflows, a plain session keeps them', async ($, on) => {
+test('Ultron may run workflows, Jarvis and Edith may not, and a plain session keeps them', async ($, on) => {
   world(on)
   const workflow = { tool: 'Workflow', script: 'x' } as never
 
   expect((await $.tool.call(workflow)).deny).toBeUndefined()
-  await $.prompt.submit({ text: '@ultron go', origin: { kind: 'composer' } })
+  await $.prompt.submit({ text: '@jarvis go', origin: { kind: 'composer' } })
   expect((await $.tool.call(workflow)).deny).toMatch(/not workflows/)
+  await $.prompt.submit({ text: '@edith go', origin: { kind: 'composer' } })
+  expect((await $.tool.call(workflow)).deny).toMatch(/not workflows/)
+  await $.prompt.submit({ text: '@ultron go', origin: { kind: 'composer' } })
+  expect((await $.tool.call(workflow)).deny).toBeUndefined()
 })
 
 test('with no lead, delegation passes through', async ($, on) => {

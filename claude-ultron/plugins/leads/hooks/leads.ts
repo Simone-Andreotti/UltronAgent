@@ -22,7 +22,7 @@ export const LEADS: Readonly<Record<LeadId, Lead>> = {
     model: 'claude-opus-5-5',
     modelLabel: 'Opus 5.5',
     effort: 'xhigh',
-    workers: [...HAIKU_ROLES, 'leads:sonnet-worker', 'leads:opus-specialist'],
+    workers: [...HAIKU_ROLES, 'leads:sonnet-worker', 'leads:opus-specialist', 'leads:opus-reviewer'],
   },
   jarvis: {
     id: 'jarvis',
@@ -50,6 +50,7 @@ export const WORKER_EFFORT: Readonly<Record<string, Lead['effort']>> = {
   'leads:haiku-worker': 'max',
   'leads:sonnet-worker': 'xhigh',
   'leads:opus-specialist': 'xhigh',
+  'leads:opus-reviewer': 'xhigh',
 }
 
 export const isLeadId = (value: unknown): value is LeadId =>

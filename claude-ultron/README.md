@@ -1,6 +1,6 @@
 # Claude Ultron
 
-Ultron, Jarvis, and Edith for Claude Code, on the terminal, the desktop app, and the VS Code extension. It ports the `codex-ultron` workflow: the same leads, greetings, silent `0`/`1` output, caller boundaries, role packets, plan gate, and engineering principles, on Claude models.
+Ultron, Jarvis, and Edith for Claude Code, on the terminal, the desktop app, and the VS Code extension. It ports the `codex-ultron` workflow: the same leads, greetings, `0`/`1` status, caller boundaries, role packets, plan gate, and engineering principles, on Claude models.
 
 ## Model Routing
 
@@ -10,6 +10,7 @@ Ultron, Jarvis, and Edith for Claude Code, on the terminal, the desktop app, and
 | `jarvis` | Lead for medium-complexity implementation, debugging, refactoring, and integration | Sonnet 5.5 | `xhigh` |
 | `edith` | Lead for simple, well-scoped implementation, debugging, and maintenance | Haiku 5.5 | `max` |
 | `opus-specialist` | One difficult, self-contained task beyond Sonnet. Ultron only | Opus 5.5 | `xhigh` |
+| `opus-reviewer` | One independent review of one concern. No edit tools. Ultron only | Opus 5.5 | `xhigh` |
 | `sonnet-worker` | Implementation, test writing, integration, and analysis beyond Haiku: medium work under Ultron, anything Jarvis assigns. Ultron and Jarvis only | Sonnet 5.5 | `xhigh` |
 | `haiku-worker` | Running tests, simple test writing, simple checks, mechanical edits, simple fixes, fully specified mechanical integration | Haiku 5.5 | `max` |
 | `haiku-code-analyst` | One bounded code search or question. No edit tools, and shell use is read-only by contract | Haiku 5.5 | `max` |
@@ -19,7 +20,19 @@ Ultron orchestrates and takes the difficult work on Opus, gives medium work to S
 
 ## Lead Accountability
 
-The lead is personally responsible for everything its workers produce. A worker's packet is treated as a claim: the lead reads the real diff, runs decisive checks itself, opens the sources its decisions rest on, and only then checks off the milestone. `0` means the lead vouches that no mistake remains; a defect it cannot resolve means `1`. The full rule is the Acceptance section of each lead in [`plugins/leads/agents/`](plugins/leads/agents/). It is an instruction to the model: the runtime enforces routing, not review.
+The lead is personally responsible for everything its workers produce, and it decides what needs its own review. Really simple work can pass on the worker's packet. Everything else is treated as a claim: the lead reads the real diff, runs decisive checks itself, opens the sources its decisions rest on, and only then checks off the milestone. `0` means the lead vouches for the whole result: it has evidence for what it reviewed, and it judged the rest too simple to hold a costly mistake. A defect it cannot resolve means `1`. The full rule is the Acceptance section of each lead in [`plugins/leads/agents/`](plugins/leads/agents/). It is an instruction to the model: the runtime enforces routing, not review.
+
+Ultron also verifies independently, so you never need to run a separate review. Before finishing a long job, and after any milestone where a hidden defect would be expensive, it sends `opus-reviewer` children at the changes, one per concern and as many as the risk needs, reproduces what they find, and repeats until a round finds nothing new. This costs extra Opus usage, which it skips on low-risk work of any size.
+
+## What You See
+
+Leads keep the chat short but readable. Before non-trivial work a lead writes an abstract of its plan: the goal, then one line per milestone with who does it. It adds one line when a milestone starts, when workers start or report, when a review finds a defect, and when a milestone is accepted, and it names what it waits for. It writes no reasoning or tool narration, and closes with at most five short lines and `0` or `1` on the last line.
+
+Ultron writes its plans, reports, and worker packets in the style of ASD-STE100: short sentences, one instruction each, active voice, one word for one meaning. This is a style rule, not certified Simplified Technical English, since the official dictionary is not included, and Ultron's reasoning stays free because it needs the full language.
+
+## Long Jobs
+
+A long new job, one whose plan has more than one milestone, starts on a new branch named after the task. The lead commits after each accepted milestone, staging only what that milestone changed. It does not push, merge that branch into another, or open a pull request unless you ask.
 
 ## Install
 
@@ -87,8 +100,9 @@ To give one project a default lead, set `agent` in its `.claude/settings.local.j
 The agents alone cannot do this everywhere: the VS Code panel has no agent selector, the desktop app's picker lists no plugin agents and always passes its own `--model`, and `effort:` frontmatter is ignored for a main-thread agent. A subagent cannot be the lead either, because its worker allowlist would not apply. So the plugin adds a small runtime in [`plugins/leads/hooks/`](plugins/leads/hooks/), a Claude Code mod that the engine runs itself, with no Node or Python needed:
 
 - It remembers each session's lead across follow-ups, compaction, resume, and forks.
-- It pins the lead's model and effort on every main-loop request, and on a forked skill, which has no agent file to set them. Workers keep the model and effort in their own files, even under `CLAUDE_CODE_EFFORT_LEVEL`. A commit's trailer names the lead's model, for the whole session.
-- It offers each lead only its own workers, at most six running at once as in `codex-ultron`, and refuses every other `Agent` call, including forks, built-in agents, per-call `model` or `effort` overrides, and workflows.
+- It pins the lead's model and effort on every main-loop request, and on a forked skill, which has no agent file to set them. Workers keep the model and effort in their own files, and direct workers keep them even under `CLAUDE_CODE_EFFORT_LEVEL`. A commit's trailer names the lead's model, for the whole session.
+- It offers each lead only its own workers, with no limit on how many run at once, and refuses every other `Agent` call, including forks, built-in agents, and per-call `model` or `effort` overrides. Ultron can also run workflows for large fan-outs and verification loops, each agent told to use one of its worker types. Jarvis and Edith cannot, because a workflow's agents could run above their tier.
+- It stops a worker or forked skill whose model request stays silent for five minutes, because a waiting lead wakes only on a notification and stopping the worker sends one. Long-running tools do not count as silence.
 - It hides the plugin's agents from plain sessions, and the lead skills are not shown to the model, so a chat with no lead pays nothing for them.
 
 Workers have no `Agent`, `Skill`, `SendMessage`, or `TaskStop` tool, because a forked skill is a nested agent and waking a sibling is delegation, so nothing runs below them. A lead puts what a skill says into the worker's packet.
@@ -109,13 +123,15 @@ The plugin is named `leads` rather than `ultron` because the desktop's `/` menu 
 - **Agent rows appear where they do nothing.** The terminal's `@` list shows Claude Code's own `leads:* (agent)` rows mid-line and in plain chats, and the runtime cannot filter those. Only a row at the start of a line selects.
 - **Browsers are off unless you enable them.** Chrome integration needs `--chrome`, `/chrome`, or `claudeInChromeDefaultEnabled`. Without it, leads and workers fall back to project-local Playwright.
 - **Permissions are yours to set.** The desktop and VS Code panels use their own mode picker. The launchers default to `--permission-mode auto` rather than the full-access default of `codex-ultron`; set `CLAUDE_ULTRON_PERMISSION_MODE` to any mode the CLI accepts, such as `bypassPermissions`, to change that.
-- **Three replies extend the silent `0`/`1` contract.** A question gets an answer, since a bare status would swallow it. A blocker is `1` plus one line, such as `1 Blocked: <reason>`, since a bare `1` would not say why. A lead waiting on a worker ends its turn with `…`, since Claude Code answers an empty turn with a prompt that costs a full request.
+- **Replies beyond `0` and `1`.** A question gets an answer, since a bare status would swallow it. A blocker is `1` plus one line, such as `1 Blocked: <reason>`, since a bare `1` would not say why. A lead waiting on a worker ends its turn by naming what it waits for, since Claude Code answers an empty turn with a prompt that costs a full request.
+- **A workflow's agents sit outside some guards.** An agent with no `agentType` runs on the session's model and effort, which the contract tells Ultron to avoid. `CLAUDE_CODE_EFFORT_LEVEL` overrides their effort, and the five-minute stall stop does not reach them. A workflow also runs at most min(16, CPUs - 2) agents at once and queues the rest, up to 1000 in a run, while direct calls have no such limit.
+- **Worktree workers start from `origin`'s default branch.** That is Claude Code's default, so the contract has each one fast-forward to the job branch first. Setting `worktree.baseRef` to `head` also works.
 - Model IDs are pinned to the 5.5 releases, so a later model means updating the agent files, `hooks/leads.ts`, the launchers, both check scripts, and `plugins/leads/tests/`.
 
 ## Package Layout
 
 - `.claude-plugin/marketplace.json`: the `ultron-claude` marketplace
-- `plugins/leads/agents/`: three leads and five workers
+- `plugins/leads/agents/`: three leads and six workers
 - `plugins/leads/hooks/`: the lead runtime; `leads.ts` holds each lead's model, effort, and workers
 - `plugins/leads/skills/`: `/ultron`, `/jarvis`, `/edith`, `/lead-off`
 - `plugins/leads/references/chat-activation.md`: what selecting a lead means, shared by every route
