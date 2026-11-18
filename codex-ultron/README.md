@@ -2,15 +2,15 @@
 
 Portable Ultron, Jarvis, Edith, and Luna setup for Codex CLI and the Codex surface in the ChatGPT desktop app.
 
-Use `luna_code_analyst` for bounded code analysis and `luna_researcher` for research. Use `luna_worker` for testing, simple checks, simple fixes, simple implementations, and routine integration. Only Jarvis and Ultron may invoke `sol_worker` on `gpt-6.1-sol` with high reasoning for difficult implementation, including complex algorithms, 3D modeling, and similar work beyond Luna capability. Choose Sol when the required complexity is already clear; do not require a failed Luna attempt. Keep architecture decisions, orchestration, and final acceptance with the lead; standalone research, testing, and checks stay with Luna. The Sol worker may run focused validation of its own deliverable. A `sol_worker` assignment must explicitly identify Jarvis or Ultron as the caller, state why Luna is insufficient, and include owned files, preserved interfaces, acceptance criteria, required validation, and a ready plan milestone for non-trivial work. Workers cannot spawn or delegate. Edith must escalate difficult implementation to Jarvis or Ultron and must never invoke or instruct the Sol worker.
+Use `luna_code_analyst` for bounded code analysis and `luna_researcher` for research. Use `luna_worker` for testing, simple checks, simple fixes, simple implementations, and routine integration. Only Jarvis and Ultron may invoke `sol_worker` on `gpt-6.2-sol` with high reasoning for difficult implementation, including complex algorithms, 3D modeling, and similar work beyond Luna capability. Choose Sol when the required complexity is already clear; do not require a failed Luna attempt. Keep architecture decisions, orchestration, and final acceptance with the lead; standalone research, testing, and checks stay with Luna. The Sol worker may run focused validation of its own deliverable. A `sol_worker` assignment must explicitly identify Jarvis or Ultron as the caller, state why Luna is insufficient, and include owned files, preserved interfaces, acceptance criteria, required validation, and a ready plan milestone for non-trivial work. Workers cannot spawn or delegate. Edith must escalate difficult implementation to Jarvis or Ultron and must never invoke or instruct the Sol worker.
 
 ## Model Routing
 
-- Ultron: `gpt-6.1-sol`, high reasoning
-- Jarvis: `gpt-6.1-sol`, high reasoning
+- Ultron: `gpt-6.2-sol`, high reasoning
+- Jarvis: `gpt-6.2-sol`, high reasoning
 - Edith: `gpt-6-luna`, maximum (`max`) reasoning
 - Every Luna subagent: `gpt-6-luna`, maximum (`max`) reasoning
-- Ultron-only Astra specialist: `gpt-6-astra`, high reasoning
+- Ultron-only Astra specialist: `gpt-6.2-astra`, high reasoning
 
 The CLI and desktop launchers select the requested lead profile and model automatically. Custom Luna agent files select their own model automatically when spawned. Generic Codex chats do not permit a skill to replace the model of an already-running thread, so use the matching launcher when deterministic lead routing matters.
 
@@ -108,8 +108,8 @@ chmod +x scripts/*.sh
 The launchers reject profile, model, provider, reasoning, and arbitrary config overrides. Direct equivalents are:
 
 ```sh
-codex --profile ultron --model gpt-6.1-sol
-codex --profile jarvis --model gpt-6.1-sol
+codex --profile ultron --model gpt-6.2-sol
+codex --profile jarvis --model gpt-6.2-sol
 ```
 
 Codex CLI has no native `--agent` primary-session switch. Launcher `-Agent`/`--agent` selects one of these profiles; standalone agent TOMLs apply when Codex selects a custom agent through its native subagent workflow. Model, plugin, browser, and network availability still depend on the installed Codex runtime and host policy.

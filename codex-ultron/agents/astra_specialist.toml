@@ -1,6 +1,6 @@
 name = "astra_specialist"
 description = "Astra specialist for one exceptionally difficult, critical, self-contained execution task assigned only by Ultron; never for orchestration or checks."
-model = "gpt-6-astra"
+model = "gpt-6.2-astra"
 model_reasoning_effort = "high"
 model_verbosity = "low"
 approval_policy = "never"

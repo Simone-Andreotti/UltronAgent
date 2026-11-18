@@ -7,13 +7,13 @@ $agentRoot = Join-Path $packageRoot "agents"
 $profileRoot = Join-Path $packageRoot "profiles"
 $expectedAgents = @{
     "edith.toml" = "gpt-6-luna"
-    "ultron.toml" = "gpt-6.1-sol"
-    "jarvis.toml" = "gpt-6.1-sol"
-    "astra_specialist.toml" = "gpt-6-astra"
+    "ultron.toml" = "gpt-6.2-sol"
+    "jarvis.toml" = "gpt-6.2-sol"
+    "astra_specialist.toml" = "gpt-6.2-astra"
     "luna_code_analyst.toml" = "gpt-6-luna"
     "luna_researcher.toml" = "gpt-6-luna"
     "luna_worker.toml" = "gpt-6-luna"
-    "sol_worker.toml" = "gpt-6.1-sol"
+    "sol_worker.toml" = "gpt-6.2-sol"
 }
 $expectedAgentEfforts = @{
     "edith.toml" = "max"
@@ -27,8 +27,8 @@ $expectedAgentEfforts = @{
 }
 $expectedProfiles = @{
     "edith.config.toml" = "gpt-6-luna"
-    "ultron.config.toml" = "gpt-6.1-sol"
-    "jarvis.config.toml" = "gpt-6.1-sol"
+    "ultron.config.toml" = "gpt-6.2-sol"
+    "jarvis.config.toml" = "gpt-6.2-sol"
 }
 $expectedProfileEfforts = @{
     "edith.config.toml" = "max"
@@ -270,7 +270,7 @@ Assert-True ($skill -match "first external-evidence action") "Skill must require
 Assert-True ($skill -match [regex]::Escape($codePreflight)) "Skill must require the gated Luna code-analysis preflight."
 Assert-True ($skill -match [regex]::Escape($researchPreflight)) "Skill must require the gated Luna research preflight."
 Assert-True ($skill -match 'Ultron and Jarvis use `gpt-6\.1-sol` with high reasoning') "Skill must route Ultron and Jarvis through Sol high."
-Assert-True ($skill -match '`astra_specialist`.*`gpt-6-astra` with high reasoning') "Skill must document the Astra high specialist."
+Assert-True ($skill -match '`astra_specialist`.*`gpt-6.2-astra` with high reasoning') "Skill must document the Astra high specialist."
 Assert-True ($skill -match 'Jarvis and Edith must never select or instruct it') "Skill must prohibit non-Ultron Astra delegation."
 Assert-True ($skill -match "bundled Browser plugin") "Skill must require browser validation for web-facing work."
 Assert-True ($metadata -match 'display_name: "Codex Ultron"') "Desktop skill metadata is missing."
@@ -295,17 +295,17 @@ Assert-True ($repositoryReadme -notmatch 'Ultron for Codex|starting prompts|\$co
 
 $launchers = @{
     "start-edith.ps1" = @("edith", "gpt-6-luna", "max")
-    "start-ultron.ps1" = @("ultron", "gpt-6.1-sol", "high")
-    "start-jarvis.ps1" = @("jarvis", "gpt-6.1-sol", "high")
+    "start-ultron.ps1" = @("ultron", "gpt-6.2-sol", "high")
+    "start-jarvis.ps1" = @("jarvis", "gpt-6.2-sol", "high")
     "start-edith.sh" = @("edith", "gpt-6-luna", "max")
-    "start-ultron.sh" = @("ultron", "gpt-6.1-sol", "high")
-    "start-jarvis.sh" = @("jarvis", "gpt-6.1-sol", "high")
+    "start-ultron.sh" = @("ultron", "gpt-6.2-sol", "high")
+    "start-jarvis.sh" = @("jarvis", "gpt-6.2-sol", "high")
     "start-edith-app.ps1" = @("edith", "gpt-6-luna", "max")
-    "start-ultron-app.ps1" = @("ultron", "gpt-6.1-sol", "high")
-    "start-jarvis-app.ps1" = @("jarvis", "gpt-6.1-sol", "high")
+    "start-ultron-app.ps1" = @("ultron", "gpt-6.2-sol", "high")
+    "start-jarvis-app.ps1" = @("jarvis", "gpt-6.2-sol", "high")
     "start-edith-app.sh" = @("edith", "gpt-6-luna", "max")
-    "start-ultron-app.sh" = @("ultron", "gpt-6.1-sol", "high")
-    "start-jarvis-app.sh" = @("jarvis", "gpt-6.1-sol", "high")
+    "start-ultron-app.sh" = @("ultron", "gpt-6.2-sol", "high")
+    "start-jarvis-app.sh" = @("jarvis", "gpt-6.2-sol", "high")
 }
 foreach ($launcher in $launchers.Keys) {
     $content = Get-Content (Join-Path $PSScriptRoot $launcher) -Raw
@@ -583,7 +583,7 @@ try {
             Write-Warning "Codex debug prompt-input is unavailable; skipped effective instruction rendering checks."
         }
         $desktopInstructions = Get-Content (Join-Path $packageRoot "instructions\ultron.md") -Raw | ConvertTo-Json -Compress
-        & codex --config 'model="gpt-6.1-sol"' --config 'model_reasoning_effort="high"' --config 'approval_policy="never"' --config 'sandbox_mode="danger-full-access"' --config 'web_search="live"' --config 'plugins."browser@openai-bundled".enabled=true' --config "developer_instructions=$desktopInstructions" mcp list | Out-Null
+        & codex --config 'model="gpt-6.2-sol"' --config 'model_reasoning_effort="high"' --config 'approval_policy="never"' --config 'sandbox_mode="danger-full-access"' --config 'web_search="live"' --config 'plugins."browser@openai-bundled".enabled=true' --config "developer_instructions=$desktopInstructions" mcp list | Out-Null
         Assert-True ($LASTEXITCODE -eq 0) "Codex failed to load desktop-style Ultron configuration."
     } else {
         Write-Warning "Codex CLI not found; skipped executable profile checks."

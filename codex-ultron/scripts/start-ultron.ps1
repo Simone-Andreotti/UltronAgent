@@ -18,7 +18,7 @@ if (-not (Test-Path (Join-Path $codexHome "ultron.config.toml"))) {
 
 $arguments = @(
     "--profile", "ultron",
-    "--model", "gpt-6.1-sol",
+    "--model", "gpt-6.2-sol",
     "--config", 'model_reasoning_effort="high"',
     "--cd", $WorkingDirectory
 )

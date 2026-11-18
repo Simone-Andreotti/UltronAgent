@@ -147,7 +147,7 @@ with tempfile.TemporaryDirectory(prefix="codex-ultron-plugin-") as temporary:
 
     for source in (package / "agents").glob("*.toml"):
         assert (codex_home / "agents" / source.name).read_bytes() == source.read_bytes()
-    assert tomllib.loads((codex_home / "agents/sol_worker.toml").read_text(encoding="utf-8"))["model"] == "gpt-6.1-sol"
+    assert tomllib.loads((codex_home / "agents/sol_worker.toml").read_text(encoding="utf-8"))["model"] == "gpt-6.2-sol"
 
     for role in ("edith", "luna_code_analyst", "luna_researcher", "luna_worker"):
         agent = tomllib.loads((codex_home / "agents" / f"{role}.toml").read_text(encoding="utf-8"))

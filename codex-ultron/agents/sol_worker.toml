@@ -1,6 +1,6 @@
 name = "sol_worker"
 description = "Sol 6.1 worker for difficult implementation beyond Luna capability, assigned only by Jarvis or Ultron."
-model = "gpt-6.1-sol"
+model = "gpt-6.2-sol"
 model_reasoning_effort = "high"
 model_verbosity = "low"
 approval_policy = "never"

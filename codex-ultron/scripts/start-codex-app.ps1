@@ -12,8 +12,8 @@ if ($args.Count -gt 0) {
 
 $leadDefinitions = @{
     edith = @{ Model = "gpt-6-luna"; Effort = "max"; Instructions = "edith.md"; Label = "Edith" }
-    jarvis = @{ Model = "gpt-6.1-sol"; Effort = "high"; Instructions = "jarvis.md"; Label = "Jarvis" }
-    ultron = @{ Model = "gpt-6.1-sol"; Effort = "high"; Instructions = "ultron.md"; Label = "Ultron" }
+    jarvis = @{ Model = "gpt-6.2-sol"; Effort = "high"; Instructions = "jarvis.md"; Label = "Jarvis" }
+    ultron = @{ Model = "gpt-6.2-sol"; Effort = "high"; Instructions = "ultron.md"; Label = "Ultron" }
 }
 
 if (-not $Agent) {
