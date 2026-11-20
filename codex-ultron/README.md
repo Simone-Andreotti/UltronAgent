@@ -6,8 +6,8 @@ Use `luna_code_analyst` for bounded code analysis and `luna_researcher` for rese
 
 ## Model Routing
 
-- Ultron: `gpt-6.2-sol`, high reasoning
-- Jarvis: `gpt-6.2-sol`, high reasoning
+- Ultron: `gpt-6.2-sol`, extra high (`xhigh`) reasoning
+- Jarvis: `gpt-6.2-sol`, extra high (`xhigh`) reasoning
 - Edith: `gpt-6-luna`, maximum (`max`) reasoning
 - Every Luna subagent: `gpt-6-luna`, maximum (`max`) reasoning
 - Ultron-only Astra specialist: `gpt-6.2-astra`, high reasoning

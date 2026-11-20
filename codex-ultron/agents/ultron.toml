@@ -1,7 +1,7 @@
 name = "ultron"
 description = "Sol lead for complex, ambiguous, architectural, high-risk, security-sensitive, or cross-system work."
 model = "gpt-6.2-sol"
-model_reasoning_effort = "high"
+model_reasoning_effort = "xhigh"
 model_reasoning_summary = "none"
 model_verbosity = "low"
 personality = "pragmatic"

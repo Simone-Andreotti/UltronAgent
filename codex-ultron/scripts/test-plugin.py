@@ -14,7 +14,7 @@ source_package = Path(__file__).resolve().parents[1]
 codex = shutil.which("codex")
 assert codex, "Codex CLI is required"
 roles = ("ultron", "jarvis", "edith")
-plugin_version = "1.3.0"
+plugin_version = "1.3.1"
 display_names = {role: role.title() for role in roles}
 
 with tempfile.TemporaryDirectory(prefix="codex-ultron-plugin-") as temporary:

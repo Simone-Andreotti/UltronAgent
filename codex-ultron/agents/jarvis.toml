@@ -1,7 +1,7 @@
 name = "jarvis"
 description = "Sol lead for medium-complexity implementation, debugging, refactoring, and integration."
 model = "gpt-6.2-sol"
-model_reasoning_effort = "high"
+model_reasoning_effort = "xhigh"
 model_reasoning_summary = "none"
 model_verbosity = "low"
 personality = "pragmatic"

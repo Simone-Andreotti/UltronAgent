@@ -49,8 +49,8 @@ fi
 
 case "$agent" in
     edith) model="gpt-6-luna"; effort="max"; instructions_file="edith.md" ;;
-    jarvis) model="gpt-6.2-sol"; effort="high"; instructions_file="jarvis.md" ;;
-    ultron) model="gpt-6.2-sol"; effort="high"; instructions_file="ultron.md" ;;
+    jarvis) model="gpt-6.2-sol"; effort="xhigh"; instructions_file="jarvis.md" ;;
+    ultron) model="gpt-6.2-sol"; effort="xhigh"; instructions_file="ultron.md" ;;
     *) printf 'Unknown lead: %s\n' "$agent" >&2; exit 2 ;;
 esac
 

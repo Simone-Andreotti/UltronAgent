@@ -19,7 +19,7 @@ if (-not (Test-Path (Join-Path $codexHome "jarvis.config.toml"))) {
 $arguments = @(
     "--profile", "jarvis",
     "--model", "gpt-6.2-sol",
-    "--config", 'model_reasoning_effort="high"',
+    "--config", 'model_reasoning_effort="xhigh"',
     "--cd", $WorkingDirectory
 )
 if ($Search) { $arguments += "--search" }
